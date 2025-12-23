@@ -1,12 +1,41 @@
 import { motion } from "framer-motion";
-import { Wine, Calendar, Package, Gift, ChevronRight, Sparkles } from "lucide-react";
+import { Wine, Calendar, Package, Gift, ChevronRight, Sparkles, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface Profile {
+  first_name: string | null;
+  last_name: string | null;
+  membership_tier: string | null;
+  created_at: string;
+}
 
 const Index = () => {
-  const memberName = "Alexandra";
-  const memberSince = "2023";
+  const { user, signOut } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from("profiles")
+        .select("first_name, last_name, membership_tier, created_at")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setProfile(data);
+        });
+    }
+  }, [user]);
+
+  const memberName = profile?.first_name || user?.email?.split("@")[0] || "Member";
+  const memberSince = profile?.created_at 
+    ? new Date(profile.created_at).getFullYear().toString()
+    : new Date().getFullYear().toString();
   const upcomingEvents = 3;
   const pendingOrders = 2;
   const bonusAvailable = true;
@@ -16,6 +45,11 @@ const Index = () => {
     { icon: Package, label: "Orders", value: pendingOrders, path: "/orders", color: "text-wine-light" },
     { icon: Gift, label: "Bonus", value: bonusAvailable ? "1" : "0", path: "/bonus", color: "text-green-400" },
   ];
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Signed out successfully");
+  };
 
   return (
     <AppLayout>
@@ -28,25 +62,33 @@ const Index = () => {
         </div>
         
         <div className="relative px-5 pt-12 pb-8 safe-area-pt">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex items-center gap-4"
-          >
-            <div className="w-14 h-14 rounded-full gold-gradient flex items-center justify-center shadow-lg">
-              <Wine className="w-7 h-7 text-accent-foreground" />
-            </div>
-            <div>
-              <p className="text-primary-foreground/70 text-sm">Welcome back,</p>
-              <h1 className="text-2xl font-serif font-bold text-primary-foreground">
-                {memberName}
-              </h1>
-              <p className="text-primary-foreground/60 text-xs mt-0.5">
-                Member since {memberSince}
-              </p>
-            </div>
-          </motion.div>
+          <div className="flex items-start justify-between">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex items-center gap-4"
+            >
+              <div className="w-14 h-14 rounded-full gold-gradient flex items-center justify-center shadow-lg">
+                <Wine className="w-7 h-7 text-accent-foreground" />
+              </div>
+              <div>
+                <p className="text-primary-foreground/70 text-sm">Welcome back,</p>
+                <h1 className="text-2xl font-serif font-bold text-primary-foreground">
+                  {memberName}
+                </h1>
+                <p className="text-primary-foreground/60 text-xs mt-0.5">
+                  Member since {memberSince}
+                </p>
+              </div>
+            </motion.div>
+            <button
+              onClick={handleLogout}
+              className="mt-2 p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors"
+            >
+              <LogOut className="w-5 h-5 text-primary-foreground/70" />
+            </button>
+          </div>
         </div>
       </header>
 
