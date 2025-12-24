@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isApproved, profile } = useAuth();
 
   if (loading) {
     return (
@@ -20,6 +20,20 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Wait for profile to load before checking approval
+  if (profile === null && user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+      </div>
+    );
+  }
+
+  // Redirect to pending approval if not approved
+  if (!isApproved) {
+    return <Navigate to="/pending-approval" replace />;
   }
 
   return <>{children}</>;

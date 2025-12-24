@@ -64,8 +64,10 @@ const Auth = () => {
             toast.error(error.message);
           }
         } else {
-          toast.success("Welcome to Cabernet Steakhouse Wine Club!");
-          navigate("/");
+          toast.success("Please check your email to confirm your account.", {
+            description: "Once confirmed, your membership will be reviewed.",
+          });
+          navigate("/pending-approval");
         }
       } else {
         const { error } = await signIn(email, password);

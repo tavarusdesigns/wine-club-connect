@@ -8,34 +8,58 @@ const mockBonuses = [
   {
     month: "December",
     year: 2025,
-    wine: {
-      name: "2020 Penfolds Grange Shiraz",
-      year: 2020,
-      region: "South Australia",
-      notes: "Rich and full-bodied with notes of dark plum, chocolate, and spice. Exceptional aging potential.",
-    },
+    wines: [
+      {
+        name: "2020 Penfolds Grange Shiraz",
+        year: 2020,
+        region: "South Australia",
+        notes: "Rich and full-bodied with notes of dark plum, chocolate, and spice.",
+      },
+      {
+        name: "2021 Château Margaux",
+        year: 2021,
+        region: "Bordeaux, France",
+        notes: "Elegant with cassis, violet, and silky tannins.",
+      },
+    ],
     isAvailable: true,
   },
   {
     month: "November",
     year: 2025,
-    wine: {
-      name: "2019 Sassicaia",
-      year: 2019,
-      region: "Tuscany, Italy",
-      notes: "Elegant and complex with blackcurrant, cedar, and hints of Mediterranean herbs.",
-    },
+    wines: [
+      {
+        name: "2019 Sassicaia",
+        year: 2019,
+        region: "Tuscany, Italy",
+        notes: "Complex with blackcurrant, cedar, and Mediterranean herbs.",
+      },
+      {
+        name: "2020 Opus One",
+        year: 2020,
+        region: "Napa Valley, USA",
+        notes: "Luxurious blend of cassis, mocha, and fine oak.",
+      },
+    ],
     isAvailable: false,
   },
   {
     month: "October",
     year: 2025,
-    wine: {
-      name: "2021 Krug Grande Cuvée",
-      year: 2021,
-      region: "Champagne, France",
-      notes: "Luxurious champagne with brioche, citrus, and almond notes. Perfect celebration wine.",
-    },
+    wines: [
+      {
+        name: "2021 Krug Grande Cuvée",
+        year: 2021,
+        region: "Champagne, France",
+        notes: "Brioche, citrus, and almond notes. Perfect celebration wine.",
+      },
+      {
+        name: "2020 Dom Pérignon",
+        year: 2020,
+        region: "Champagne, France",
+        notes: "Toasted hazelnut, white flowers, and creamy finish.",
+      },
+    ],
     isAvailable: false,
   },
 ];
@@ -58,10 +82,10 @@ const Bonus = () => {
           {/* Header */}
           <div>
             <h1 className="text-3xl font-serif font-bold text-foreground">
-              Wine Bonus
+              Wines of the Month
             </h1>
             <p className="text-muted-foreground mt-1">
-              Your exclusive monthly selections
+              Two exclusive wines each month
             </p>
           </div>
 
@@ -85,7 +109,7 @@ const Bonus = () => {
                   Premium Member
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  1 bonus wine per month included
+                  2 wines per month included
                 </p>
               </div>
             </div>
