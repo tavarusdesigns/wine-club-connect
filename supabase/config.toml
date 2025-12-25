@@ -1,1 +1,4 @@
 project_id = "owzcuyefzddkmcrpzjlk"
+
+[functions.eventbrite]
+verify_jwt = false
