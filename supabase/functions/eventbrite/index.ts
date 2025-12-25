@@ -5,6 +5,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple in-memory cache (per function instance) to reduce Eventbrite API calls.
+// This helps avoid 429 rate limits when the UI refreshes or multiple users load the same data.
+type CacheEntry = {
+  ts: number;
+  data: unknown;
+  status: number;
+};
+
+const cache = new Map<string, CacheEntry>();
+
+const getTtlMsForAction = (action: string) => {
+  switch (action) {
+    case "organizations":
+      return 5 * 60 * 1000; // 5 min
+    case "events":
+      return 60 * 1000; // 1 min
+    case "event_details":
+      return 2 * 60 * 1000; // 2 min
+    default:
+      return 30 * 1000;
+  }
+};
+
+const getCacheKey = (action: string, organizationId?: string | null, eventId?: string | null) =>
+  `${action}|org:${organizationId ?? ""}|event:${eventId ?? ""}`;
+
+const getCached = (key: string, ttlMs: number) => {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > ttlMs) return null;
+  return entry;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -81,6 +114,21 @@ serve(async (req) => {
 
     console.log(`Fetching from Eventbrite: ${eventbriteUrl}`);
 
+    const ttlMs = getTtlMsForAction(action);
+    const cacheKey = getCacheKey(action, organizationId, eventId);
+
+    const cached = getCached(cacheKey, ttlMs);
+    if (cached) {
+      console.log(`Cache hit: ${cacheKey}`);
+      return new Response(JSON.stringify(cached.data), {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "X-Cache": "HIT",
+        },
+      });
+    }
+
     const response = await fetch(eventbriteUrl, {
       method,
       headers: {
@@ -92,6 +140,22 @@ serve(async (req) => {
 
     const data = await response.json();
 
+    // If we hit Eventbrite rate limiting, try to serve a stale cache entry (if any) to avoid blank screens.
+    if (response.status === 429) {
+      console.error("Eventbrite API rate limit (429)");
+      const stale = cache.get(cacheKey);
+      if (stale) {
+        console.log(`Serving stale cache for: ${cacheKey}`);
+        return new Response(JSON.stringify(stale.data), {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "X-Cache": "STALE",
+          },
+        });
+      }
+    }
+
     if (!response.ok) {
       console.error("Eventbrite API error:", data);
       return new Response(
@@ -100,10 +164,13 @@ serve(async (req) => {
       );
     }
 
+    // Cache successful responses
+    cache.set(cacheKey, { ts: Date.now(), data, status: response.status });
+
     console.log(`Eventbrite response received successfully`);
 
     return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "MISS" },
     });
   } catch (error: unknown) {
     console.error("Edge function error:", error);
