@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useEventbrite, formatEventbriteEvent } from "@/hooks/useEventbrite";
 
-const ORGANIZATION_ID = "1977526374620";
+const ORGANIZATION_ID = "8131866373";
 
 const Events = () => {
   const [searchQuery, setSearchQuery] = useState("");
