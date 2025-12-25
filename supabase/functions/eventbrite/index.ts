@@ -23,9 +23,20 @@ serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action") || "events";
-    const organizationId = url.searchParams.get("organization_id");
-    const eventId = url.searchParams.get("event_id");
+
+    // Support both query-string calls (GET) and JSON-body calls (POST via functions.invoke)
+    let bodyParams: any = {};
+    if (req.method !== "GET") {
+      try {
+        bodyParams = await req.json();
+      } catch {
+        bodyParams = {};
+      }
+    }
+
+    const action = url.searchParams.get("action") || bodyParams?.action || "events";
+    const organizationId = url.searchParams.get("organization_id") || bodyParams?.organization_id;
+    const eventId = url.searchParams.get("event_id") || bodyParams?.event_id;
 
     console.log(`Eventbrite action: ${action}, organizationId: ${organizationId}, eventId: ${eventId}`);
 

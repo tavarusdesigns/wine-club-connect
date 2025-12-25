@@ -24,7 +24,8 @@ const Events = () => {
 
   useEffect(() => {
     fetchOrganizations();
-  }, [fetchOrganizations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!selectedOrgId && organizations.length > 0) {
