@@ -29,6 +29,11 @@ interface EventbriteOrganization {
   name: string;
 }
 
+const DEFAULT_EVENTBRITE_ORG: EventbriteOrganization = {
+  id: "141817181534",
+  name: "Cabernet Steakhouse",
+};
+
 export const useEventbrite = (organizationId?: string) => {
   const [events, setEvents] = useState<EventbriteEvent[]>([]);
   const [organizations, setOrganizations] = useState<EventbriteOrganization[]>([]);
@@ -46,16 +51,23 @@ export const useEventbrite = (organizationId?: string) => {
 
       if (error) throw error;
 
-      setOrganizations((data as any)?.organizations ?? []);
+      const orgs = ((data as any)?.organizations ?? []) as EventbriteOrganization[];
+      // Some Eventbrite tokens return an empty organizations list even though events exist.
+      // Fall back to the known Cabernet Steakhouse org so Events can still load.
+      setOrganizations(orgs.length > 0 ? orgs : [DEFAULT_EVENTBRITE_ORG]);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch organizations";
       setError(message);
       console.error("Eventbrite organizations error:", err);
       toast.error("Could not load organizations", { description: message });
+
+      // Keep the page usable even if org lookup fails.
+      setOrganizations([DEFAULT_EVENTBRITE_ORG]);
     } finally {
       setLoading(false);
     }
   }, []);
+
 
   const fetchEvents = useCallback(async (orgId: string) => {
     setLoading(true);
