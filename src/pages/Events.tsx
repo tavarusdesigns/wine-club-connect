@@ -1,18 +1,42 @@
 import { motion } from "framer-motion";
 import { Search, Filter, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import EventCard from "@/components/cards/EventCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useEventbrite, formatEventbriteEvent } from "@/hooks/useEventbrite";
 
-const ORGANIZATION_ID = "8131866373";
-
 const Events = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { events, loading, error } = useEventbrite(ORGANIZATION_ID);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+
+  const { events, loading, error, organizations, fetchOrganizations, fetchEvents } =
+    useEventbrite();
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, [fetchOrganizations]);
+
+  useEffect(() => {
+    if (!selectedOrgId && organizations.length > 0) {
+      setSelectedOrgId(organizations[0].id);
+    }
+  }, [organizations, selectedOrgId]);
+
+  useEffect(() => {
+    if (selectedOrgId) {
+      fetchEvents(selectedOrgId);
+    }
+  }, [selectedOrgId, fetchEvents]);
 
   const formattedEvents = events.map(formatEventbriteEvent);
 
@@ -45,6 +69,24 @@ const Events = () => {
               Discover upcoming tastings & experiences
             </p>
           </div>
+
+          {organizations.length > 0 && (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">Organization</p>
+              <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
+                <SelectTrigger className="w-[260px] bg-secondary">
+                  <SelectValue placeholder="Select organization" />
+                </SelectTrigger>
+                <SelectContent>
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Search */}
           <div className="flex gap-2">
