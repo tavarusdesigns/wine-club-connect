@@ -40,14 +40,14 @@ serve(async (req) => {
         break;
       
       case "events":
-        // Get events for an organization
+        // Get events for an organization (active + ended for recent past events)
         if (!organizationId) {
           return new Response(
             JSON.stringify({ error: "organization_id is required for events action" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        eventbriteUrl = `https://www.eventbriteapi.com/v3/organizations/${organizationId}/events/?status=live,started&order_by=start_asc&expand=venue,ticket_availability`;
+        eventbriteUrl = `https://www.eventbriteapi.com/v3/organizations/${organizationId}/events/?status=live,started,ended&order_by=start_desc&expand=venue,ticket_availability`;
         break;
 
       case "event_details":

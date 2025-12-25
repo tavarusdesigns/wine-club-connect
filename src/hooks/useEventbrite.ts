@@ -8,6 +8,7 @@ interface EventbriteEvent {
   description: { text: string } | null;
   start: { local: string; utc: string };
   end: { local: string; utc: string };
+  status: string;
   url: string;
   venue?: {
     name: string;
@@ -92,7 +93,25 @@ export const useEventbrite = (organizationId?: string) => {
         throw new Error(result.error || "Failed to fetch events");
       }
 
-      setEvents(result.events || []);
+      const allEvents: EventbriteEvent[] = result.events || [];
+      const now = new Date();
+      
+      // Separate active and past events
+      const activeEvents = allEvents.filter(
+        (e) => e.status === "live" || e.status === "started" || new Date(e.end.utc) > now
+      );
+      const pastEvents = allEvents
+        .filter((e) => e.status === "ended" || new Date(e.end.utc) <= now)
+        .sort((a, b) => new Date(b.end.utc).getTime() - new Date(a.end.utc).getTime())
+        .slice(0, 2); // Only 2 most recent past events
+      
+      // Combine: active first (sorted by start date), then past
+      const combinedEvents = [
+        ...activeEvents.sort((a, b) => new Date(a.start.utc).getTime() - new Date(b.start.utc).getTime()),
+        ...pastEvents,
+      ];
+      
+      setEvents(combinedEvents);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch events";
       setError(message);
@@ -122,6 +141,9 @@ export const useEventbrite = (organizationId?: string) => {
 // Format Eventbrite event for display
 export const formatEventbriteEvent = (event: EventbriteEvent) => {
   const startDate = new Date(event.start.local);
+  const endDate = new Date(event.end.utc);
+  const now = new Date();
+  const isPast = event.status === "ended" || endDate <= now;
   
   return {
     id: event.id,
@@ -143,5 +165,6 @@ export const formatEventbriteEvent = (event: EventbriteEvent) => {
     isSoldOut: event.ticket_availability?.is_sold_out || false,
     hasAvailableTickets: event.ticket_availability?.has_available_tickets ?? true,
     price: event.ticket_availability?.minimum_ticket_price?.display || "Free",
+    isPast,
   };
 };
