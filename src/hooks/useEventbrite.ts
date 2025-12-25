@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -35,67 +35,42 @@ export const useEventbrite = (organizationId?: string) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("eventbrite", {
-        body: {},
-        headers: {},
+        body: { action: "organizations" },
       });
 
-      // The invoke method with query params requires using the path differently
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/eventbrite?action=organizations`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      if (error) throw error;
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to fetch organizations");
-      }
-
-      setOrganizations(result.organizations || []);
+      setOrganizations((data as any)?.organizations ?? []);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch organizations";
       setError(message);
       console.error("Eventbrite organizations error:", err);
+      toast.error("Could not load organizations", { description: message });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchEvents = async (orgId: string) => {
+  const fetchEvents = useCallback(async (orgId: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/eventbrite?action=events&organization_id=${orgId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("eventbrite", {
+        body: { action: "events", organization_id: orgId },
+      });
 
-      const result = await response.json();
+      if (error) throw error;
 
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to fetch events");
-      }
-
-      const allEvents: EventbriteEvent[] = result.events || [];
+      const allEvents: EventbriteEvent[] = (data as any)?.events || [];
       const now = new Date();
-      
+
       // Separate active and past events
       const activeEvents = allEvents.filter(
         (e) => e.status === "live" || e.status === "started" || new Date(e.end.utc) > now
@@ -104,28 +79,31 @@ export const useEventbrite = (organizationId?: string) => {
         .filter((e) => e.status === "ended" || new Date(e.end.utc) <= now)
         .sort((a, b) => new Date(b.end.utc).getTime() - new Date(a.end.utc).getTime())
         .slice(0, 2); // Only 2 most recent past events
-      
+
       // Combine: active first (sorted by start date), then past
       const combinedEvents = [
-        ...activeEvents.sort((a, b) => new Date(a.start.utc).getTime() - new Date(b.start.utc).getTime()),
+        ...activeEvents.sort(
+          (a, b) => new Date(a.start.utc).getTime() - new Date(b.start.utc).getTime()
+        ),
         ...pastEvents,
       ];
-      
+
       setEvents(combinedEvents);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch events";
       setError(message);
       console.error("Eventbrite events error:", err);
+      toast.error("Could not load events", { description: message });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (organizationId) {
       fetchEvents(organizationId);
     }
-  }, [organizationId]);
+  }, [organizationId, fetchEvents]);
 
   return {
     events,
