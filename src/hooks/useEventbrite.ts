@@ -48,18 +48,7 @@ export const useEventbrite = (organizationId?: string) => {
       if (error) throw error;
 
       const orgs = ((data as any)?.organizations ?? []) as EventbriteOrganization[];
-      // Only use the Cabernet Steakhouse organization
-      const cabernetOrgs = orgs.filter((o) => o.name === "Cabernet Steakhouse");
-
-      if (cabernetOrgs.length === 0) {
-        setOrganizations([]);
-        const message = "No accessible organization named 'Cabernet Steakhouse' was found for this token.";
-        setError(message);
-        toast.error("Could not find Cabernet Steakhouse", { description: message });
-        return;
-      }
-
-      setOrganizations(cabernetOrgs);
+      setOrganizations(orgs);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch organizations";
       setError(message);
