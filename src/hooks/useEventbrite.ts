@@ -29,10 +29,6 @@ interface EventbriteOrganization {
   name: string;
 }
 
-const CABERNET_STEAKHOUSE_ORG: EventbriteOrganization = {
-  id: "8131866373",
-  name: "Cabernet Steakhouse",
-};
 
 export const useEventbrite = (organizationId?: string) => {
   const [events, setEvents] = useState<EventbriteEvent[]>([]);
@@ -52,17 +48,25 @@ export const useEventbrite = (organizationId?: string) => {
       if (error) throw error;
 
       const orgs = ((data as any)?.organizations ?? []) as EventbriteOrganization[];
-      // Filter to only include Cabernet Steakhouse, or use the known org if not found
-      const cabernetOrg = orgs.find((o) => o.name === "Cabernet Steakhouse");
-      setOrganizations(cabernetOrg ? [cabernetOrg] : [CABERNET_STEAKHOUSE_ORG]);
+      // Only use the Cabernet Steakhouse organization
+      const cabernetOrgs = orgs.filter((o) => o.name === "Cabernet Steakhouse");
+
+      if (cabernetOrgs.length === 0) {
+        setOrganizations([]);
+        const message = "No accessible organization named 'Cabernet Steakhouse' was found for this token.";
+        setError(message);
+        toast.error("Could not find Cabernet Steakhouse", { description: message });
+        return;
+      }
+
+      setOrganizations(cabernetOrgs);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch organizations";
       setError(message);
       console.error("Eventbrite organizations error:", err);
       toast.error("Could not load organizations", { description: message });
 
-      // Keep the page usable even if org lookup fails.
-      setOrganizations([CABERNET_STEAKHOUSE_ORG]);
+      setOrganizations([]);
     } finally {
       setLoading(false);
     }
