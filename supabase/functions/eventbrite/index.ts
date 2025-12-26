@@ -45,14 +45,20 @@ serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get("EVENTBRITE_API_KEY");
-    
+    const apiKeyRaw = Deno.env.get("EVENTBRITE_API_KEY");
+    const apiKey = apiKeyRaw?.trim();
+
     if (!apiKey) {
       console.error("EVENTBRITE_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "Eventbrite API key not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Debug (safe): helps detect accidental whitespace/newlines in the token.
+    if (apiKeyRaw !== apiKey) {
+      console.warn("EVENTBRITE_API_KEY had leading/trailing whitespace; trimmed");
     }
 
     const url = new URL(req.url);
