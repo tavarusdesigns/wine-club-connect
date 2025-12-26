@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Search, Filter, Loader2 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import EventCard from "@/components/cards/EventCard";
 import { Input } from "@/components/ui/input";
@@ -8,20 +8,28 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useEventbrite, formatEventbriteEvent } from "@/hooks/useEventbrite";
 
-const CABERNET_ORG_ID = "8131866373";
-
 const Events = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const hasFetched = useRef(false);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
 
-  const { events, loading, error, fetchEvents } = useEventbrite();
+  const { events, loading, error, organizations, fetchOrganizations, fetchEvents } =
+    useEventbrite();
 
   useEffect(() => {
-    if (!hasFetched.current) {
-      hasFetched.current = true;
-      fetchEvents(CABERNET_ORG_ID);
+    fetchOrganizations();
+  }, [fetchOrganizations]);
+
+  useEffect(() => {
+    if (!selectedOrgId && organizations.length > 0) {
+      setSelectedOrgId(organizations[0].id);
     }
-  }, [fetchEvents]);
+  }, [organizations, selectedOrgId]);
+
+  useEffect(() => {
+    if (selectedOrgId) {
+      fetchEvents(selectedOrgId);
+    }
+  }, [selectedOrgId, fetchEvents]);
 
   const formattedEvents = events.map(formatEventbriteEvent);
 
