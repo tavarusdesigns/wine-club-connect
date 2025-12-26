@@ -1,43 +1,27 @@
 import { motion } from "framer-motion";
 import { Search, Filter, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import EventCard from "@/components/cards/EventCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useEventbrite, formatEventbriteEvent } from "@/hooks/useEventbrite";
 
+const CABERNET_ORG_ID = "8131866373";
+
 const Events = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+  const hasFetched = useRef(false);
 
-  const { events, loading, error, organizations, fetchOrganizations, fetchEvents } =
-    useEventbrite();
-
-  useEffect(() => {
-    fetchOrganizations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { events, loading, error, fetchEvents } = useEventbrite();
 
   useEffect(() => {
-    if (!selectedOrgId && organizations.length > 0) {
-      setSelectedOrgId(organizations[0].id);
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchEvents(CABERNET_ORG_ID);
     }
-  }, [organizations, selectedOrgId]);
-
-  useEffect(() => {
-    if (selectedOrgId) {
-      fetchEvents(selectedOrgId);
-    }
-  }, [selectedOrgId, fetchEvents]);
+  }, [fetchEvents]);
 
   const formattedEvents = events.map(formatEventbriteEvent);
 
@@ -71,23 +55,6 @@ const Events = () => {
             </p>
           </div>
 
-          {organizations.length > 0 && (
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm text-muted-foreground">Organization</p>
-              <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-                <SelectTrigger className="w-[260px] bg-secondary">
-                  <SelectValue placeholder="Select organization" />
-                </SelectTrigger>
-                <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           {/* Search */}
           <div className="flex gap-2">
