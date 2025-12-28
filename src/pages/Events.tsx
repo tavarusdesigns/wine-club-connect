@@ -5,12 +5,15 @@ import AppLayout from "@/components/layout/AppLayout";
 import EventCard from "@/components/cards/EventCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useEventbrite, formatEventbriteEvent } from "@/hooks/useEventbrite";
 
 const Events = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+  const [showAllEvents, setShowAllEvents] = useState(false);
 
   const { events, loading, error, organizations, fetchOrganizations, fetchEvents } =
     useEventbrite();
@@ -33,10 +36,13 @@ const Events = () => {
 
   const formattedEvents = events.map(formatEventbriteEvent);
 
-  const filteredEvents = formattedEvents.filter((event) =>
-    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter by active/all and search query
+  const filteredEvents = formattedEvents
+    .filter((event) => showAllEvents || !event.isPast)
+    .filter((event) =>
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   const handleRegister = (eventUrl: string, eventTitle: string) => {
     window.open(eventUrl, "_blank");
@@ -64,20 +70,32 @@ const Events = () => {
           </div>
 
 
-          {/* Search */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search events..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-secondary border-border"
-              />
+          {/* Search & Toggle */}
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search events..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-secondary border-border"
+                />
+              </div>
+              <Button variant="glass" size="icon">
+                <Filter className="w-4 h-4" />
+              </Button>
             </div>
-            <Button variant="glass" size="icon">
-              <Filter className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="show-past"
+                checked={showAllEvents}
+                onCheckedChange={setShowAllEvents}
+              />
+              <Label htmlFor="show-past" className="text-sm text-muted-foreground cursor-pointer">
+                Show past events
+              </Label>
+            </div>
           </div>
 
           {/* Loading State */}
