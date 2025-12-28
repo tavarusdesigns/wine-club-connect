@@ -76,24 +76,12 @@ export const useEventbrite = (organizationId?: string) => {
       const allEvents: EventbriteEvent[] = (data as any)?.events || [];
       const now = new Date();
 
-      // Separate active and past events
-      const activeEvents = allEvents.filter(
-        (e) => e.status === "live" || e.status === "started" || new Date(e.end.utc) > now
-      );
-      const pastEvents = allEvents
-        .filter((e) => e.status === "ended" || new Date(e.end.utc) <= now)
-        .sort((a, b) => new Date(b.end.utc).getTime() - new Date(a.end.utc).getTime())
-        .slice(0, 2); // Only 2 most recent past events
+      // Only show active events (live, started, or not yet ended)
+      const activeEvents = allEvents
+        .filter((e) => e.status === "live" || e.status === "started" || new Date(e.end.utc) > now)
+        .sort((a, b) => new Date(a.start.utc).getTime() - new Date(b.start.utc).getTime());
 
-      // Combine: active first (sorted by start date), then past
-      const combinedEvents = [
-        ...activeEvents.sort(
-          (a, b) => new Date(a.start.utc).getTime() - new Date(b.start.utc).getTime()
-        ),
-        ...pastEvents,
-      ];
-
-      setEvents(combinedEvents);
+      setEvents(activeEvents);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch events";
       setError(message);
