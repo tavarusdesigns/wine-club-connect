@@ -74,14 +74,13 @@ export const useEventbrite = (organizationId?: string) => {
       if (error) throw error;
 
       const allEvents: EventbriteEvent[] = (data as any)?.events || [];
-      const now = new Date();
+      
+      // Sort all events by start date
+      const sortedEvents = allEvents.sort(
+        (a, b) => new Date(a.start.utc).getTime() - new Date(b.start.utc).getTime()
+      );
 
-      // Only show active events (live, started, or not yet ended)
-      const activeEvents = allEvents
-        .filter((e) => e.status === "live" || e.status === "started" || new Date(e.end.utc) > now)
-        .sort((a, b) => new Date(a.start.utc).getTime() - new Date(b.start.utc).getTime());
-
-      setEvents(activeEvents);
+      setEvents(sortedEvents);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch events";
       setError(message);
