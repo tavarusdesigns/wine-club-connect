@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
-import { Wine, Calendar, Package, Gift, ChevronRight, Sparkles, LogOut } from "lucide-react";
+import { Wine, Calendar, Package, Gift, ChevronRight, Sparkles, LogOut, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ interface Profile {
 
 const Index = () => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
@@ -174,6 +176,16 @@ const Index = () => {
               </Button>
             </Link>
           </div>
+          
+          {/* Admin Dashboard Link */}
+          {isAdmin && (
+            <Link to="/admin">
+              <Button variant="outline" className="w-full border-gold/30 text-gold hover:bg-gold/10">
+                <Shield className="w-4 h-4 mr-2" />
+                Admin Dashboard
+              </Button>
+            </Link>
+          )}
         </motion.div>
 
         {/* Featured Event */}
