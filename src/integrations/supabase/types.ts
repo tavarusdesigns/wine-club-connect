@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      bonus_wines: {
+        Row: {
+          bonus_id: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          region: string | null
+          vintage_year: number | null
+        }
+        Insert: {
+          bonus_id: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          region?: string | null
+          vintage_year?: number | null
+        }
+        Update: {
+          bonus_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          region?: string | null
+          vintage_year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bonus_wines_bonus_id_fkey"
+            columns: ["bonus_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_wine_bonuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_wine_bonuses: {
+        Row: {
+          created_at: string
+          id: string
+          is_available: boolean
+          month: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          month: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          month?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -52,6 +117,35 @@ export type Database = {
           wine_preferences?: string[] | null
         }
         Relationships: []
+      }
+      user_bonus_claims: {
+        Row: {
+          bonus_id: string
+          claimed_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bonus_id: string
+          claimed_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          bonus_id?: string
+          claimed_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bonus_claims_bonus_id_fkey"
+            columns: ["bonus_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_wine_bonuses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
