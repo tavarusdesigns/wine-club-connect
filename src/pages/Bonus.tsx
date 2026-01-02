@@ -1,75 +1,30 @@
 import { motion } from "framer-motion";
-import { Gift, Sparkles, Wine, Crown } from "lucide-react";
+import { Gift, Sparkles, Wine, Crown, Loader2 } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import BonusCard from "@/components/cards/BonusCard";
 import { toast } from "sonner";
-
-const mockBonuses = [
-  {
-    month: "December",
-    year: 2025,
-    wines: [
-      {
-        name: "2020 Penfolds Grange Shiraz",
-        year: 2020,
-        region: "South Australia",
-        notes: "Rich and full-bodied with notes of dark plum, chocolate, and spice.",
-      },
-      {
-        name: "2021 Château Margaux",
-        year: 2021,
-        region: "Bordeaux, France",
-        notes: "Elegant with cassis, violet, and silky tannins.",
-      },
-    ],
-    isAvailable: true,
-  },
-  {
-    month: "November",
-    year: 2025,
-    wines: [
-      {
-        name: "2019 Sassicaia",
-        year: 2019,
-        region: "Tuscany, Italy",
-        notes: "Complex with blackcurrant, cedar, and Mediterranean herbs.",
-      },
-      {
-        name: "2020 Opus One",
-        year: 2020,
-        region: "Napa Valley, USA",
-        notes: "Luxurious blend of cassis, mocha, and fine oak.",
-      },
-    ],
-    isAvailable: false,
-  },
-  {
-    month: "October",
-    year: 2025,
-    wines: [
-      {
-        name: "2021 Krug Grande Cuvée",
-        year: 2021,
-        region: "Champagne, France",
-        notes: "Brioche, citrus, and almond notes. Perfect celebration wine.",
-      },
-      {
-        name: "2020 Dom Pérignon",
-        year: 2020,
-        region: "Champagne, France",
-        notes: "Toasted hazelnut, white flowers, and creamy finish.",
-      },
-    ],
-    isAvailable: false,
-  },
-];
+import { useWineBonuses } from "@/hooks/useWineBonuses";
 
 const Bonus = () => {
-  const handleClaim = (month: string) => {
-    toast.success(`Bonus claimed!`, {
-      description: `Your ${month} bonus wine has been added to your next pickup.`,
+  const { bonuses, isLoading, claimBonus, getMonthName, totalClaimed } = useWineBonuses();
+
+  const handleClaim = (bonusId: string, month: string) => {
+    claimBonus.mutate(bonusId, {
+      onSuccess: () => {
+        toast.success(`Bonus claimed!`, {
+          description: `Your ${month} bonus wine has been added to your next pickup.`,
+        });
+      },
+      onError: (error) => {
+        toast.error("Failed to claim bonus", {
+          description: error.message,
+        });
+      },
     });
   };
+
+  const availableBonuses = bonuses.filter(b => b.is_available && !b.isClaimed);
+  const claimedBonuses = bonuses.filter(b => b.isClaimed || !b.is_available);
 
   return (
     <AppLayout>
@@ -124,7 +79,7 @@ const Bonus = () => {
               className="glass-card rounded-xl p-4 text-center"
             >
               <Gift className="w-6 h-6 mx-auto mb-2 text-gold" />
-              <p className="text-2xl font-bold text-foreground">12</p>
+              <p className="text-2xl font-bold text-foreground">{totalClaimed}</p>
               <p className="text-xs text-muted-foreground">Total Claimed</p>
             </motion.div>
             <motion.div
@@ -134,52 +89,94 @@ const Bonus = () => {
               className="glass-card rounded-xl p-4 text-center"
             >
               <Wine className="w-6 h-6 mx-auto mb-2 text-wine-light" />
-              <p className="text-2xl font-bold text-foreground">$2,400</p>
+              <p className="text-2xl font-bold text-foreground">${totalClaimed * 200}</p>
               <p className="text-xs text-muted-foreground">Value Received</p>
             </motion.div>
           </div>
 
-          {/* Current Month Bonus */}
-          <div className="space-y-3">
-            <h2 className="font-serif text-lg font-semibold text-foreground flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
-              Available Now
-            </h2>
-            {mockBonuses
-              .filter((b) => b.isAvailable)
-              .map((bonus, index) => (
-                <motion.div
-                  key={bonus.month}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + index * 0.1 }}
-                >
-                  <BonusCard
-                    {...bonus}
-                    onClaim={() => handleClaim(bonus.month)}
-                  />
-                </motion.div>
-              ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              {/* Available Bonuses */}
+              {availableBonuses.length > 0 && (
+                <div className="space-y-3">
+                  <h2 className="font-serif text-lg font-semibold text-foreground flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
+                    Available Now
+                  </h2>
+                  {availableBonuses.map((bonus, index) => {
+                    const monthName = getMonthName(bonus.month);
+                    return (
+                      <motion.div
+                        key={bonus.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 + index * 0.1 }}
+                      >
+                        <BonusCard
+                          month={monthName}
+                          year={bonus.year}
+                          wines={bonus.wines.map(w => ({
+                            name: w.name,
+                            year: w.vintage_year || 0,
+                            region: w.region || "",
+                            notes: w.notes || "",
+                          }))}
+                          isAvailable={true}
+                          onClaim={() => handleClaim(bonus.id, monthName)}
+                        />
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
 
-          {/* Past Bonuses */}
-          <div className="space-y-3">
-            <h2 className="font-serif text-lg font-semibold text-muted-foreground">
-              Previously Claimed
-            </h2>
-            {mockBonuses
-              .filter((b) => !b.isAvailable)
-              .map((bonus, index) => (
-                <motion.div
-                  key={bonus.month}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                >
-                  <BonusCard {...bonus} />
-                </motion.div>
-              ))}
-          </div>
+              {/* Claimed / Past Bonuses */}
+              {claimedBonuses.length > 0 && (
+                <div className="space-y-3">
+                  <h2 className="font-serif text-lg font-semibold text-muted-foreground">
+                    Previously Claimed
+                  </h2>
+                  {claimedBonuses.map((bonus, index) => {
+                    const monthName = getMonthName(bonus.month);
+                    return (
+                      <motion.div
+                        key={bonus.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 + index * 0.1 }}
+                      >
+                        <BonusCard
+                          month={monthName}
+                          year={bonus.year}
+                          wines={bonus.wines.map(w => ({
+                            name: w.name,
+                            year: w.vintage_year || 0,
+                            region: w.region || "",
+                            notes: w.notes || "",
+                          }))}
+                          isAvailable={false}
+                        />
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {bonuses.length === 0 && (
+                <div className="text-center py-12">
+                  <Wine className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <p className="text-muted-foreground">No wine bonuses available yet</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">
+                    Check back soon for new selections
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </motion.div>
       </div>
     </AppLayout>
