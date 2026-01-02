@@ -174,6 +174,88 @@ export type Database = {
         }
         Relationships: []
       }
+      wine_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          line_number: number
+          line_total: number
+          order_id: string
+          price: number
+          quantity: number
+          wine_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_number: number
+          line_total?: number
+          order_id: string
+          price?: number
+          quantity?: number
+          wine_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_number?: number
+          line_total?: number
+          order_id?: string
+          price?: number
+          quantity?: number
+          wine_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wine_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "wine_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wine_orders: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          order_date: string
+          subtotal: number
+          tax_amount: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          order_date?: string
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          order_date?: string
+          subtotal?: number
+          tax_amount?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wine_orders_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
