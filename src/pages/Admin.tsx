@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Users, Wine, UserCheck, ArrowLeft } from "lucide-react";
+import { Shield, Users, Wine, UserCheck, ArrowLeft, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import PendingUsersTab from "@/components/admin/PendingUsersTab";
 import UserRolesTab from "@/components/admin/UserRolesTab";
 import WineBonusesTab from "@/components/admin/WineBonusesTab";
+import WineOrdersTab from "@/components/admin/WineOrdersTab";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ const Admin = () => {
 
           {/* Tabs */}
           <Tabs defaultValue="pending" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-secondary">
+            <TabsList className="grid w-full grid-cols-4 bg-secondary">
               <TabsTrigger value="pending" className="flex items-center gap-2">
                 <UserCheck className="w-4 h-4" />
                 <span className="hidden sm:inline">Pending</span>
@@ -84,6 +85,10 @@ const Admin = () => {
               <TabsTrigger value="bonuses" className="flex items-center gap-2">
                 <Wine className="w-4 h-4" />
                 <span className="hidden sm:inline">Bonuses</span>
+              </TabsTrigger>
+              <TabsTrigger value="orders" className="flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                <span className="hidden sm:inline">Orders</span>
               </TabsTrigger>
             </TabsList>
 
@@ -97,6 +102,10 @@ const Admin = () => {
 
             <TabsContent value="bonuses" className="mt-4">
               <WineBonusesTab />
+            </TabsContent>
+
+            <TabsContent value="orders" className="mt-4">
+              <WineOrdersTab />
             </TabsContent>
           </Tabs>
         </motion.div>
