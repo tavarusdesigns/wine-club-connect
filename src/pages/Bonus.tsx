@@ -124,6 +124,8 @@ const Bonus = () => {
                             year: w.vintage_year || 0,
                             region: w.region || "",
                             notes: w.notes || "",
+                            image_url: w.image_url || undefined,
+                            member_price: w.member_price || undefined,
                           }))}
                           isAvailable={true}
                           onClaim={() => handleClaim(bonus.id, monthName)}
@@ -157,6 +159,8 @@ const Bonus = () => {
                             year: w.vintage_year || 0,
                             region: w.region || "",
                             notes: w.notes || "",
+                            image_url: w.image_url || undefined,
+                            member_price: w.member_price || undefined,
                           }))}
                           isAvailable={false}
                         />

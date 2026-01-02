@@ -19,6 +19,8 @@ export type Database = {
           bonus_id: string
           created_at: string
           id: string
+          image_url: string | null
+          member_price: number | null
           name: string
           notes: string | null
           region: string | null
@@ -28,6 +30,8 @@ export type Database = {
           bonus_id: string
           created_at?: string
           id?: string
+          image_url?: string | null
+          member_price?: number | null
           name: string
           notes?: string | null
           region?: string | null
@@ -37,6 +41,8 @@ export type Database = {
           bonus_id?: string
           created_at?: string
           id?: string
+          image_url?: string | null
+          member_price?: number | null
           name?: string
           notes?: string | null
           region?: string | null

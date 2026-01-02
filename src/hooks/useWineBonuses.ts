@@ -8,6 +8,8 @@ interface BonusWine {
   vintage_year: number | null;
   region: string | null;
   notes: string | null;
+  image_url: string | null;
+  member_price: number | null;
 }
 
 interface MonthlyBonus {

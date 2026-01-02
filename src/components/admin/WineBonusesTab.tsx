@@ -49,6 +49,8 @@ const WineBonusesTab = () => {
     vintage_year: "",
     region: "",
     notes: "",
+    image_url: "",
+    member_price: "",
   });
 
   useEffect(() => {
@@ -98,6 +100,8 @@ const WineBonusesTab = () => {
       vintage_year: newWine.vintage_year ? parseInt(newWine.vintage_year) : undefined,
       region: newWine.region || undefined,
       notes: newWine.notes || undefined,
+      image_url: newWine.image_url || undefined,
+      member_price: newWine.member_price ? parseFloat(newWine.member_price) : undefined,
     });
 
     if (error) {
@@ -105,7 +109,7 @@ const WineBonusesTab = () => {
     } else {
       toast.success("Wine added");
       setAddWineDialogOpen(null);
-      setNewWine({ name: "", vintage_year: "", region: "", notes: "" });
+      setNewWine({ name: "", vintage_year: "", region: "", notes: "", image_url: "", member_price: "" });
     }
   };
 
@@ -229,7 +233,15 @@ const WineBonusesTab = () => {
                     className="flex items-start justify-between gap-3 p-3 rounded-lg bg-secondary/50"
                   >
                     <div className="flex items-start gap-3 min-w-0">
-                      <Wine className="w-5 h-5 text-wine-light shrink-0 mt-0.5" />
+                      {wine.image_url ? (
+                        <img
+                          src={wine.image_url}
+                          alt={wine.name}
+                          className="w-12 h-16 object-cover rounded shrink-0"
+                        />
+                      ) : (
+                        <Wine className="w-5 h-5 text-wine-light shrink-0 mt-0.5" />
+                      )}
                       <div className="min-w-0">
                         <p className="font-medium text-foreground">{wine.name}</p>
                         <p className="text-sm text-muted-foreground">
@@ -237,6 +249,11 @@ const WineBonusesTab = () => {
                           {wine.vintage_year && wine.region && " • "}
                           {wine.region}
                         </p>
+                        {wine.member_price && (
+                          <p className="text-sm text-gold font-medium">
+                            Member Price: ${wine.member_price.toFixed(2)}
+                          </p>
+                        )}
                         {wine.notes && (
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                             {wine.notes}
@@ -309,6 +326,26 @@ const WineBonusesTab = () => {
                           placeholder="Describe the wine's flavors and characteristics..."
                           className="bg-secondary border-border"
                           rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Image URL</Label>
+                        <Input
+                          value={newWine.image_url}
+                          onChange={(e) => setNewWine({ ...newWine, image_url: e.target.value })}
+                          placeholder="https://example.com/wine-image.jpg"
+                          className="bg-secondary border-border"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Wine Member Price ($)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={newWine.member_price}
+                          onChange={(e) => setNewWine({ ...newWine, member_price: e.target.value })}
+                          placeholder="99.99"
+                          className="bg-secondary border-border"
                         />
                       </div>
                       <Button onClick={() => handleAddWine(bonus.id)} className="w-full" variant="gold">
