@@ -7,6 +7,8 @@ interface BonusWine {
   year: number;
   region: string;
   notes: string;
+  image_url?: string;
+  member_price?: number;
 }
 
 interface BonusCardProps {
@@ -50,9 +52,17 @@ const BonusCard = ({ month, year, wines, isAvailable, onClaim }: BonusCardProps)
           {wines.map((wine, index) => (
             <div key={index} className="glass-card rounded-xl p-4 bg-background/10 backdrop-blur-sm border-primary-foreground/10">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-background/20 flex items-center justify-center flex-shrink-0">
-                  <Wine className="w-5 h-5 text-primary-foreground" />
-                </div>
+                {wine.image_url ? (
+                  <img
+                    src={wine.image_url}
+                    alt={wine.name}
+                    className="w-14 h-20 object-cover rounded-lg flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-background/20 flex items-center justify-center flex-shrink-0">
+                    <Wine className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <h4 className="font-serif text-base font-semibold text-primary-foreground">
                     {wine.name}
@@ -60,6 +70,11 @@ const BonusCard = ({ month, year, wines, isAvailable, onClaim }: BonusCardProps)
                   <p className="text-sm text-primary-foreground/70">
                     {wine.year} • {wine.region}
                   </p>
+                  {wine.member_price && (
+                    <p className="text-sm font-medium text-gold mt-1">
+                      Member Price: ${wine.member_price.toFixed(2)}
+                    </p>
+                  )}
                   <p className="text-xs text-primary-foreground/60 mt-1 line-clamp-2">
                     {wine.notes}
                   </p>

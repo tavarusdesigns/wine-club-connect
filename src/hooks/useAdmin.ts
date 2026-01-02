@@ -35,6 +35,8 @@ interface BonusWine {
   vintage_year: number | null;
   region: string | null;
   notes: string | null;
+  image_url: string | null;
+  member_price: number | null;
 }
 
 export function useAdmin() {
@@ -235,7 +237,7 @@ export function useAdmin() {
   // Add wine to bonus
   async function addWineToBonus(
     bonusId: string,
-    wine: { name: string; vintage_year?: number; region?: string; notes?: string }
+    wine: { name: string; vintage_year?: number; region?: string; notes?: string; image_url?: string; member_price?: number }
   ) {
     const { error } = await supabase
       .from("bonus_wines")
