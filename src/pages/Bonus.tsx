@@ -40,7 +40,7 @@ const Bonus = () => {
               Wines of the Month
             </h1>
             <p className="text-muted-foreground mt-1">
-              Two exclusive wines each month
+              Two exclusive wines each month • Pickup at Cabernet Steakhouse
             </p>
           </div>
 

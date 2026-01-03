@@ -82,7 +82,7 @@ const Orders = () => {
                       name: item.wine_name,
                       quantity: item.quantity,
                     }))}
-                    pickupLocation="Downtown Wine Club"
+                    pickupLocation="Cabernet Steakhouse"
                     total={order.total}
                   />
                 </motion.div>
@@ -111,7 +111,7 @@ const Orders = () => {
                       name: item.wine_name,
                       quantity: item.quantity,
                     }))}
-                    pickupLocation="Downtown Wine Club"
+                    pickupLocation="Cabernet Steakhouse"
                     total={order.total}
                   />
                 </motion.div>
@@ -140,7 +140,7 @@ const Orders = () => {
                       name: item.wine_name,
                       quantity: item.quantity,
                     }))}
-                    pickupLocation="Downtown Wine Club"
+                    pickupLocation="Cabernet Steakhouse"
                     total={order.total}
                   />
                 </motion.div>
