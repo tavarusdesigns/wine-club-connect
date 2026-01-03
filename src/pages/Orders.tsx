@@ -1,58 +1,26 @@
 import { motion } from "framer-motion";
-import { Package } from "lucide-react";
+import { Package, Wine, Loader2 } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import OrderCard from "@/components/cards/OrderCard";
-
-const mockOrders = [
-  {
-    id: "1",
-    orderNumber: "WC-2025-1247",
-    date: "December 20, 2025",
-    status: "ready" as const,
-    wines: [
-      { name: "2021 Château Margaux Bordeaux", quantity: 2 },
-      { name: "2022 Opus One Red Blend", quantity: 1 },
-    ],
-    pickupLocation: "Downtown Wine Club, 123 Vine Street",
-  },
-  {
-    id: "2",
-    orderNumber: "WC-2025-1246",
-    date: "December 15, 2025",
-    status: "pending" as const,
-    wines: [
-      { name: "2020 Dom Pérignon Champagne", quantity: 1 },
-      { name: "2021 Screaming Eagle Cabernet", quantity: 1 },
-    ],
-    pickupLocation: "Downtown Wine Club, 123 Vine Street",
-  },
-  {
-    id: "3",
-    orderNumber: "WC-2025-1240",
-    date: "December 1, 2025",
-    status: "picked_up" as const,
-    wines: [
-      { name: "2022 Caymus Special Selection", quantity: 2 },
-    ],
-    pickupLocation: "Downtown Wine Club, 123 Vine Street",
-  },
-  {
-    id: "4",
-    orderNumber: "WC-2025-1235",
-    date: "November 25, 2025",
-    status: "picked_up" as const,
-    wines: [
-      { name: "2021 Silver Oak Alexander Valley", quantity: 1 },
-      { name: "2022 Cloudy Bay Sauvignon Blanc", quantity: 2 },
-    ],
-    pickupLocation: "Downtown Wine Club, 123 Vine Street",
-  },
-];
+import { useWineOrders } from "@/hooks/useWineOrders";
+import { format } from "date-fns";
 
 const Orders = () => {
-  const readyOrders = mockOrders.filter((o) => o.status === "ready");
-  const pendingOrders = mockOrders.filter((o) => o.status === "pending");
-  const pastOrders = mockOrders.filter((o) => o.status === "picked_up");
+  const { orders, isLoading } = useWineOrders();
+
+  const readyOrders = orders.filter((o) => o.status === "ready");
+  const pendingOrders = orders.filter((o) => o.status === "pending");
+  const pastOrders = orders.filter((o) => o.status === "picked_up");
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-gold" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -85,6 +53,13 @@ const Orders = () => {
             </div>
           </div>
 
+          {orders.length === 0 && (
+            <div className="glass-card rounded-xl p-8 text-center">
+              <Wine className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No orders yet</p>
+            </div>
+          )}
+
           {/* Ready for Pickup */}
           {readyOrders.length > 0 && (
             <div className="space-y-3">
@@ -99,7 +74,17 @@ const Orders = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <OrderCard {...order} />
+                  <OrderCard
+                    orderNumber={order.id.slice(0, 8).toUpperCase()}
+                    date={format(new Date(order.order_date), "MMMM d, yyyy")}
+                    status="ready"
+                    wines={order.items.map((item) => ({
+                      name: item.wine_name,
+                      quantity: item.quantity,
+                    }))}
+                    pickupLocation="Downtown Wine Club"
+                    total={order.total}
+                  />
                 </motion.div>
               ))}
             </div>
@@ -118,7 +103,17 @@ const Orders = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 + index * 0.1 }}
                 >
-                  <OrderCard {...order} />
+                  <OrderCard
+                    orderNumber={order.id.slice(0, 8).toUpperCase()}
+                    date={format(new Date(order.order_date), "MMMM d, yyyy")}
+                    status="pending"
+                    wines={order.items.map((item) => ({
+                      name: item.wine_name,
+                      quantity: item.quantity,
+                    }))}
+                    pickupLocation="Downtown Wine Club"
+                    total={order.total}
+                  />
                 </motion.div>
               ))}
             </div>
@@ -137,7 +132,17 @@ const Orders = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 + index * 0.1 }}
                 >
-                  <OrderCard {...order} />
+                  <OrderCard
+                    orderNumber={order.id.slice(0, 8).toUpperCase()}
+                    date={format(new Date(order.order_date), "MMMM d, yyyy")}
+                    status="picked_up"
+                    wines={order.items.map((item) => ({
+                      name: item.wine_name,
+                      quantity: item.quantity,
+                    }))}
+                    pickupLocation="Downtown Wine Club"
+                    total={order.total}
+                  />
                 </motion.div>
               ))}
             </div>
