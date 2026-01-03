@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface Profile {
   first_name: string | null;
@@ -84,12 +85,15 @@ const Index = () => {
                 </p>
               </div>
             </motion.div>
-            <button
-              onClick={handleLogout}
-              className="mt-2 p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors"
-            >
-              <LogOut className="w-5 h-5 text-primary-foreground/70" />
-            </button>
+            <div className="flex items-center gap-2 mt-2">
+              <NotificationBell />
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors"
+              >
+                <LogOut className="w-5 h-5 text-primary-foreground/70" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
