@@ -13,6 +13,7 @@ interface OrderCardProps {
   status: "ready" | "pending" | "picked_up";
   wines: WineItem[];
   pickupLocation: string;
+  total?: number;
 }
 
 const statusConfig = {
@@ -39,6 +40,7 @@ const OrderCard = ({
   status,
   wines,
   pickupLocation,
+  total,
 }: OrderCardProps) => {
   const statusInfo = statusConfig[status];
   const StatusIcon = statusInfo.icon;
@@ -85,6 +87,15 @@ const OrderCard = ({
           </div>
         ))}
       </div>
+
+      {total !== undefined && (
+        <div className="pt-2 border-t border-border/50">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Order Total</span>
+            <span className="text-lg font-bold text-gold">${total.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
 
       {status === "ready" && (
         <div className="pt-2 border-t border-border/50">

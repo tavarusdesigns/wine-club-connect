@@ -221,6 +221,7 @@ export type Database = {
           id: string
           member_id: string
           order_date: string
+          status: string
           subtotal: number
           tax_amount: number
           total: number
@@ -231,6 +232,7 @@ export type Database = {
           id?: string
           member_id: string
           order_date?: string
+          status?: string
           subtotal?: number
           tax_amount?: number
           total?: number
@@ -241,6 +243,7 @@ export type Database = {
           id?: string
           member_id?: string
           order_date?: string
+          status?: string
           subtotal?: number
           tax_amount?: number
           total?: number
