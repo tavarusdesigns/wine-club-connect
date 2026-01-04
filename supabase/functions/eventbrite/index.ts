@@ -64,7 +64,7 @@ serve(async (req) => {
     const url = new URL(req.url);
 
     // Support both query-string calls (GET) and JSON-body calls (POST via functions.invoke)
-    let bodyParams: any = {};
+    let bodyParams: Record<string, unknown> = {};
     if (req.method !== "GET") {
       try {
         bodyParams = await req.json();
@@ -80,8 +80,8 @@ serve(async (req) => {
     console.log(`Eventbrite action: ${action}, organizationId: ${organizationId}, eventId: ${eventId}`);
 
     let eventbriteUrl = "";
-    let method = "GET";
-    let body = null;
+    const method = "GET";
+    const body = null;
 
     switch (action) {
       case "organizations":

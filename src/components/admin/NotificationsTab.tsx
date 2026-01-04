@@ -93,9 +93,10 @@ const NotificationsTab = () => {
       setMessage("");
       setType("general");
       setSelectedMembers([]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error sending notification:", error);
-      toast.error(error.message || "Failed to send notification");
+      const message = error instanceof Error ? error.message : "Failed to send notification";
+      toast.error(message);
     } finally {
       setIsSending(false);
     }

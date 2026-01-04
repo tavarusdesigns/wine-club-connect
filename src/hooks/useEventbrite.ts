@@ -47,7 +47,9 @@ export const useEventbrite = (organizationId?: string) => {
 
       if (error) throw error;
 
-      const orgs = ((data as any)?.organizations ?? []) as EventbriteOrganization[];
+      const orgs = (data && typeof data === "object" && "organizations" in data)
+        ? (data as { organizations: EventbriteOrganization[] }).organizations
+        : [];
       setOrganizations(orgs);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch organizations";
@@ -73,7 +75,9 @@ export const useEventbrite = (organizationId?: string) => {
 
       if (error) throw error;
 
-      const allEvents: EventbriteEvent[] = (data as any)?.events || [];
+      const allEvents: EventbriteEvent[] = (data && typeof data === "object" && "events" in data)
+        ? (data as { events: EventbriteEvent[] }).events
+        : [];
       
       // Sort all events by start date
       const sortedEvents = allEvents.sort(

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,8 +38,8 @@ import { cn } from "@/lib/utils";
 
 interface OrderLineItem {
   wine_name: string;
-  quantity: number;
-  price: number;
+  quantity: string; // keep as string for natural typing
+  price: string; // keep as string for natural typing
 }
 
 interface Member {
@@ -78,15 +79,16 @@ const statusConfig = {
 };
 
 const WineOrdersTab = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  // Create dialog removed in favor of dedicated page
   const [editingOrder, setEditingOrder] = useState<WineOrder | null>(null);
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [orderDate, setOrderDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
   const [lineItems, setLineItems] = useState<OrderLineItem[]>(
-    Array(10).fill({ wine_name: "", quantity: 1, price: 0 })
+    Array(10).fill({ wine_name: "", quantity: "1", price: "" })
   );
 
   // Fetch approved members
@@ -162,8 +164,10 @@ const WineOrdersTab = () => {
   // Calculate totals
   const subtotal = useMemo(() => {
     return lineItems.reduce((sum, item) => {
-      if (item.wine_name && item.quantity > 0 && item.price > 0) {
-        return sum + item.quantity * item.price;
+      const q = parseInt(item.quantity || "0", 10);
+      const p = parseFloat(item.price || "0");
+      if (item.wine_name && q > 0 && p > 0) {
+        return sum + q * p;
       }
       return sum;
     }, 0);
@@ -197,14 +201,18 @@ const WineOrdersTab = () => {
 
       if (orderError) throw orderError;
 
-      const orderItems = validItems.map((item) => ({
-        order_id: order.id,
-        line_number: item.line_number,
-        wine_name: item.wine_name,
-        quantity: item.quantity,
-        price: item.price,
-        line_total: item.quantity * item.price,
-      }));
+      const orderItems = validItems.map((item) => {
+        const quantity = parseInt(item.quantity || "0", 10) || 0;
+        const price = parseFloat(item.price || "0") || 0;
+        return {
+          order_id: order.id,
+          line_number: item.line_number,
+          wine_name: item.wine_name,
+          quantity,
+          price,
+          line_total: quantity * price,
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from("wine_order_items")
@@ -258,14 +266,18 @@ const WineOrdersTab = () => {
         .delete()
         .eq("order_id", editingOrder.id);
 
-      const orderItems = validItems.map((item) => ({
-        order_id: editingOrder.id,
-        line_number: item.line_number,
-        wine_name: item.wine_name,
-        quantity: item.quantity,
-        price: item.price,
-        line_total: item.quantity * item.price,
-      }));
+      const orderItems = validItems.map((item) => {
+        const quantity = parseInt(item.quantity || "0", 10) || 0;
+        const price = parseFloat(item.price || "0") || 0;
+        return {
+          order_id: editingOrder.id,
+          line_number: item.line_number,
+          wine_name: item.wine_name,
+          quantity,
+          price,
+          line_total: quantity * price,
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from("wine_order_items")
@@ -323,7 +335,7 @@ const WineOrdersTab = () => {
   const resetForm = () => {
     setSelectedMemberId("");
     setOrderDate(new Date().toISOString().split("T")[0]);
-    setLineItems(Array(10).fill({ wine_name: "", quantity: 1, price: 0 }));
+    setLineItems(Array(10).fill({ wine_name: "", quantity: "1", price: "" }));
   };
 
   const openEditDialog = (order: WineOrder) => {
@@ -332,13 +344,13 @@ const WineOrdersTab = () => {
     setOrderDate(order.order_date);
     
     // Fill line items from order
-    const items: OrderLineItem[] = Array(10).fill({ wine_name: "", quantity: 1, price: 0 });
+    const items: OrderLineItem[] = Array(10).fill({ wine_name: "", quantity: "1", price: "" });
     order.items.forEach((item, index) => {
       if (index < 10) {
         items[index] = {
           wine_name: item.wine_name,
-          quantity: item.quantity,
-          price: Number(item.price),
+          quantity: String(item.quantity),
+          price: String(Number(item.price)),
         };
       }
     });
@@ -348,7 +360,7 @@ const WineOrdersTab = () => {
   const updateLineItem = (
     index: number,
     field: keyof OrderLineItem,
-    value: string | number
+    value: string
   ) => {
     setLineItems((prev) => {
       const updated = [...prev];
@@ -428,9 +440,12 @@ const WineOrdersTab = () => {
                   type="number"
                   min="1"
                   value={item.quantity}
-                  onChange={(e) =>
-                    updateLineItem(index, "quantity", parseInt(e.target.value) || 1)
-                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || /^[0-9]+$/.test(val)) {
+                      updateLineItem(index, "quantity", val);
+                    }
+                  }}
                   className="bg-background"
                 />
               </div>
@@ -439,10 +454,13 @@ const WineOrdersTab = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={item.price || ""}
-                  onChange={(e) =>
-                    updateLineItem(index, "price", parseFloat(e.target.value) || 0)
-                  }
+                  value={item.price}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*(\.\d{0,2})?$/.test(val)) {
+                      updateLineItem(index, "price", val);
+                    }
+                  }}
                   placeholder="0.00"
                   className="bg-background"
                 />
@@ -486,24 +504,11 @@ const WineOrdersTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Create Order Button */}
-      <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) resetForm(); }}>
-        <DialogTrigger asChild>
-          <Button className="wine-gradient">
-            <Plus className="w-4 h-4 mr-2" />
-            Create New Order
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-background">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-gold" />
-              Create Wine Order
-            </DialogTitle>
-          </DialogHeader>
-          <OrderForm />
-        </DialogContent>
-      </Dialog>
+      {/* Create Order Link Button */}
+      <Button className="wine-gradient" onClick={() => navigate("/admin/orders/new") }>
+        <Plus className="w-4 h-4 mr-2" />
+        Create New Order
+      </Button>
 
       {/* Edit Order Dialog */}
       <Dialog open={!!editingOrder} onOpenChange={(open) => { if (!open) { setEditingOrder(null); resetForm(); } }}>
