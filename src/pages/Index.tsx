@@ -54,7 +54,7 @@ const Index = () => {
   const quickStats = [
     { icon: Calendar, label: "Events", value: upcomingEvents, path: "/events", color: "text-gold" },
     { icon: Package, label: "Orders", value: pendingOrders, path: "/orders", color: "text-wine-light" },
-    { icon: Gift, label: "Bonus", value: unclaimedBonuses, path: "/bonus", color: "text-green-400" },
+    { icon: Gift, label: "Wines of the Month", value: unclaimedBonuses, path: "/bonus", color: "text-green-400" },
   ];
 
   const handleLogout = async () => {
@@ -151,7 +151,7 @@ const Index = () => {
                       <Gift className="w-6 h-6 text-accent-foreground" />
                     </div>
                     <div>
-                      <p className="text-sm text-primary-foreground/70">December Bonus</p>
+                      <p className="text-sm text-primary-foreground/70">Wines of the Month</p>
                       <p className="font-serif text-lg font-semibold text-primary-foreground">
                         Ready to Claim
                       </p>

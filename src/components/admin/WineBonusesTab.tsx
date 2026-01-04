@@ -356,6 +356,8 @@ const WineBonusesTab = () => {
                 </Dialog>
               </CardContent>
             </Card>
+
+            
           </motion.div>
         ))
       )}

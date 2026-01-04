@@ -54,13 +54,13 @@ export const useWineBonuses = () => {
       if (user) {
         const { data: claimsData } = await supabase
           .from("user_bonus_claims")
-          .select("bonus_id")
+          .select("bonus_id, received_at")
           .eq("user_id", user.id);
         
         userClaims = claimsData?.map(c => c.bonus_id) || [];
       }
 
-      // Map bonuses with their wines and claim status
+      // Map bonuses with their wines and claim status only
       return bonusData.map(bonus => ({
         id: bonus.id,
         month: bonus.month,

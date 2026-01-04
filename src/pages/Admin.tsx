@@ -66,7 +66,7 @@ const Admin = () => {
                   Admin Dashboard
                 </h1>
                 <p className="text-muted-foreground text-sm">
-                  Manage users and wine bonuses
+                  Manage users and Wines of the Month
                 </p>
               </div>
             </div>
@@ -85,7 +85,7 @@ const Admin = () => {
               </TabsTrigger>
               <TabsTrigger value="bonuses" className="flex items-center gap-2">
                 <Wine className="w-4 h-4" />
-                <span className="hidden sm:inline">Bonuses</span>
+                <span className="hidden sm:inline">Wines of Month</span>
               </TabsTrigger>
               <TabsTrigger value="orders" className="flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4" />

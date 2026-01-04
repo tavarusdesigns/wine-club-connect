@@ -11,7 +11,7 @@ interface BonusWine {
   member_price?: number;
 }
 
-interface BonusCardProps {
+interface BonusCardProps { 
   month: string;
   year: number;
   wines: BonusWine[];

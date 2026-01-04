@@ -61,7 +61,7 @@ const Bonus = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Membership Status</p>
                 <p className="text-xl font-serif font-bold text-gold">
-                  Premium Member
+                  Reserva Member
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   2 wines per month included
@@ -127,8 +127,8 @@ const Bonus = () => {
                             image_url: w.image_url || undefined,
                             member_price: w.member_price || undefined,
                           }))}
-                          isAvailable={true}
-                          onClaim={() => handleClaim(bonus.id, monthName)}
+                          isAvailable={!bonus.isClaimed}
+                          onClaim={!bonus.isClaimed ? () => handleClaim(bonus.id, monthName) : undefined}
                         />
                       </motion.div>
                     );
