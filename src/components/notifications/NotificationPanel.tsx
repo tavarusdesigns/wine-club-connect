@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
-import { Bell, Calendar, Package, Gift, Check, X } from "lucide-react";
+import { Bell, Calendar, Package, Gift, Check, X, BellRing } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNotifications, Notification } from "@/hooks/useNotifications";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 interface NotificationPanelProps {
   onClose: () => void;
@@ -106,6 +108,25 @@ const NotificationItem = ({
 
 const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { isSupported, isSubscribed, isLoading, subscribe, unsubscribe } = usePushNotifications();
+
+  const handlePushToggle = async () => {
+    if (isSubscribed) {
+      const success = await unsubscribe();
+      if (success) {
+        toast.success("Push notifications disabled");
+      } else {
+        toast.error("Failed to disable push notifications");
+      }
+    } else {
+      const success = await subscribe();
+      if (success) {
+        toast.success("Push notifications enabled!");
+      } else {
+        toast.error("Failed to enable push notifications. Please allow notifications in your browser settings.");
+      }
+    }
+  };
 
   return (
     <motion.div
@@ -143,6 +164,25 @@ const NotificationPanel = ({ onClose }: NotificationPanelProps) => {
           </button>
         </div>
       </div>
+
+      {/* Push notification toggle */}
+      {isSupported && (
+        <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between bg-secondary/30">
+          <div className="flex items-center gap-2">
+            <BellRing className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Push notifications</span>
+          </div>
+          <Button
+            variant={isSubscribed ? "outline" : "default"}
+            size="sm"
+            onClick={handlePushToggle}
+            disabled={isLoading}
+            className="h-7 text-xs"
+          >
+            {isLoading ? "..." : isSubscribed ? "Enabled" : "Enable"}
+          </Button>
+        </div>
+      )}
 
       <ScrollArea className="max-h-80">
         {notifications.length === 0 ? (
