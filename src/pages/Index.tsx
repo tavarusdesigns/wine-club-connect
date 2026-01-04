@@ -9,6 +9,9 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { useEventbrite } from "@/hooks/useEventbrite";
+import { useWineOrders } from "@/hooks/useWineOrders";
+import { useWineBonuses } from "@/hooks/useWineBonuses";
 
 interface Profile {
   first_name: string | null;
@@ -21,6 +24,9 @@ const Index = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const { events } = useEventbrite();
+  const { orders } = useWineOrders();
+  const { bonuses } = useWineBonuses();
 
   useEffect(() => {
     if (user) {
@@ -39,14 +45,16 @@ const Index = () => {
   const memberSince = profile?.created_at 
     ? new Date(profile.created_at).getFullYear().toString()
     : new Date().getFullYear().toString();
-  const upcomingEvents = 3;
-  const pendingOrders = 2;
-  const bonusAvailable = true;
+  
+  // Calculate real counts
+  const upcomingEvents = events?.filter(e => new Date(e.start?.local || "") >= new Date()).length || 0;
+  const pendingOrders = orders?.filter(o => o.status === "pending" || o.status === "ready").length || 0;
+  const unclaimedBonuses = bonuses?.filter(b => b.is_available && !b.isClaimed).length || 0;
 
   const quickStats = [
     { icon: Calendar, label: "Events", value: upcomingEvents, path: "/events", color: "text-gold" },
     { icon: Package, label: "Orders", value: pendingOrders, path: "/orders", color: "text-wine-light" },
-    { icon: Gift, label: "Bonus", value: bonusAvailable ? "1" : "0", path: "/bonus", color: "text-green-400" },
+    { icon: Gift, label: "Bonus", value: unclaimedBonuses, path: "/bonus", color: "text-green-400" },
   ];
 
   const handleLogout = async () => {
@@ -126,7 +134,7 @@ const Index = () => {
         </motion.div>
 
         {/* Monthly Bonus Highlight */}
-        {bonusAvailable && (
+        {unclaimedBonuses > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

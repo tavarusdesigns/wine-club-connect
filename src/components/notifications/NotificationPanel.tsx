@@ -36,6 +36,19 @@ const getNotificationColor = (type: string) => {
   }
 };
 
+const getNotificationLabel = (type: string) => {
+  switch (type) {
+    case "order_status":
+      return "Wine Order";
+    case "new_event":
+      return "New Event";
+    case "bonus_reminder":
+      return "Wines of the Month";
+    default:
+      return "Notification";
+  }
+};
+
 const NotificationItem = ({
   notification,
   onMarkAsRead,
@@ -45,6 +58,7 @@ const NotificationItem = ({
 }) => {
   const Icon = getNotificationIcon(notification.type);
   const colorClass = getNotificationColor(notification.type);
+  const label = getNotificationLabel(notification.type);
 
   return (
     <motion.div
@@ -61,9 +75,14 @@ const NotificationItem = ({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <p className={cn("text-sm font-medium", !notification.is_read && "text-foreground")}>
-              {notification.title}
-            </p>
+            <div>
+              <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", colorClass)}>
+                {label}
+              </span>
+              <p className={cn("text-sm font-medium mt-1", !notification.is_read && "text-foreground")}>
+                {notification.title}
+              </p>
+            </div>
             {!notification.is_read && (
               <button
                 onClick={onMarkAsRead}
