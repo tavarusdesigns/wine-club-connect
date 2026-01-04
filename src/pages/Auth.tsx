@@ -21,14 +21,20 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isApproved, loading, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    // If already logged in, redirect appropriately once profile state is known
     if (user) {
-      navigate("/");
+      if (loading || profile === null) return; // wait until profile is loaded or explicitly null
+      if (!isApproved) {
+        navigate("/pending-approval");
+      } else {
+        navigate("/");
+      }
     }
-  }, [user, navigate]);
+  }, [user, isApproved, loading, profile, navigate]);
 
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -103,8 +109,8 @@ const Auth = () => {
             transition={{ duration: 0.5 }}
             className="flex flex-col items-center gap-4"
           >
-            <div className="w-24 h-24 rounded-full bg-background/10 flex items-center justify-center shadow-lg ring-1 ring-border">
-              <img src="/logo.png" alt="Cabernet Wine Club" className="h-16 w-auto" />
+            <div className="inline-flex items-center rounded-md bg-black/85 dark:bg-black px-3 py-2 shadow-md ring-1 ring-white/20">
+              <img src="/logo.png" alt="Cabernet Wine Club" className="h-28 sm:h-36 md:h-44 lg:h-52 w-auto" />
             </div>
             <div>
               <h1 className="text-2xl font-serif font-bold text-primary-foreground">
@@ -240,6 +246,15 @@ const Auth = () => {
                 ? "Already a member? Sign in"
                 : "Not a member yet? Join now"}
             </button>
+          </div>
+          <div className="mt-8 flex items-center justify-center">
+            <img
+              src="https://www.cabernetsteakhouse.com/wp-content/uploads/2026/01/Cabernet-Wine-Club-Logo-Official-1.png"
+              alt="Cabernet Wine Club"
+              className="w-auto h-[72px] sm:h-24 md:h-[120px] lg:h-[144px] object-contain"
+              loading="lazy"
+              decoding="async"
+            />
           </div>
         </motion.div>
       </div>

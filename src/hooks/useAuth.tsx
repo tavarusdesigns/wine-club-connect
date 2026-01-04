@@ -116,8 +116,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      // Immediately reflect signed-out state locally to avoid transient blank/loading states
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+    }
   };
 
   const isApproved = profile?.is_approved ?? false;

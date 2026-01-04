@@ -10,9 +10,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     <div className="min-h-screen bg-background">
       {/* Header with brand logo */}
       <header className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
-        <div className="max-w-5xl mx-auto px-5 h-16 flex items-center justify-center">
+        <div className="max-w-5xl mx-auto px-5 h-32 sm:h-40 md:h-48 lg:h-56 flex items-center justify-center">
           <a href="/" className="flex items-center">
-            <img src="/logo.png" alt="Cabernet Wine Club" className="h-8 sm:h-9 md:h-10 lg:h-12 w-auto object-contain" />
+            <img src="/logo.png" alt="Cabernet Wine Club" className="h-28 sm:h-36 md:h-44 lg:h-52 w-auto object-contain" />
           </a>
         </div>
       </header>
@@ -22,7 +22,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* Footer logo above bottom nav */}
       <footer className="border-t border-border/40">
         <div className="max-w-5xl mx-auto px-5 py-6 flex items-center justify-center">
-          <img src="/logo.png" alt="Cabernet Wine Club" className="h-7 sm:h-8 w-auto opacity-80 object-contain" />
+          <img src="/logo.png" alt="Cabernet Wine Club" className="h-5 sm:h-6 w-auto opacity-90 object-contain" />
         </div>
       </footer>
 

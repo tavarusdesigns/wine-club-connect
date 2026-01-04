@@ -31,9 +31,7 @@ const PendingApproval = () => {
             transition={{ duration: 0.5 }}
             className="flex flex-col items-center gap-4"
           >
-            <div className="w-24 h-24 rounded-full bg-background/10 flex items-center justify-center shadow-lg ring-1 ring-border">
-              <img src="/logo.png" alt="Cabernet Wine Club" className="h-16 w-auto" />
-            </div>
+            <img src="/logo.png" alt="Cabernet Wine Club" className="h-16 sm:h-20 md:h-24 lg:h-28 w-auto" />
             <div>
               <h1 className="text-2xl font-serif font-bold text-primary-foreground">
                 Cabernet Steakhouse
