@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Users, Wine, UserCheck, ArrowLeft, ShoppingCart } from "lucide-react";
+import { Shield, Users, Wine, UserCheck, ArrowLeft, ShoppingCart, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import PendingUsersTab from "@/components/admin/PendingUsersTab";
 import UserRolesTab from "@/components/admin/UserRolesTab";
 import WineBonusesTab from "@/components/admin/WineBonusesTab";
 import WineOrdersTab from "@/components/admin/WineOrdersTab";
+import NotificationsTab from "@/components/admin/NotificationsTab";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ const Admin = () => {
 
           {/* Tabs */}
           <Tabs defaultValue="pending" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-secondary">
+            <TabsList className="grid w-full grid-cols-5 bg-secondary">
               <TabsTrigger value="pending" className="flex items-center gap-2">
                 <UserCheck className="w-4 h-4" />
                 <span className="hidden sm:inline">Pending</span>
@@ -89,6 +90,10 @@ const Admin = () => {
               <TabsTrigger value="orders" className="flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4" />
                 <span className="hidden sm:inline">Orders</span>
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="flex items-center gap-2">
+                <Bell className="w-4 h-4" />
+                <span className="hidden sm:inline">Notify</span>
               </TabsTrigger>
             </TabsList>
 
@@ -106,6 +111,10 @@ const Admin = () => {
 
             <TabsContent value="orders" className="mt-4">
               <WineOrdersTab />
+            </TabsContent>
+
+            <TabsContent value="notifications" className="mt-4">
+              <NotificationsTab />
             </TabsContent>
           </Tabs>
         </motion.div>

@@ -2,3 +2,6 @@ project_id = "owzcuyefzddkmcrpzjlk"
 
 [functions.eventbrite]
 verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
