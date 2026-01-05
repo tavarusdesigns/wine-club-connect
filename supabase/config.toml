@@ -3,6 +3,9 @@ project_id = "owzcuyefzddkmcrpzjlk"
 [functions.eventbrite]
 verify_jwt = false
 
+[functions.eventbrite_public]
+verify_jwt = false
+
 [functions.normalize_phone]
 verify_jwt = false
 

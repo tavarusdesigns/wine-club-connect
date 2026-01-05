@@ -41,11 +41,35 @@ const Events = () => {
 
   // Filter by active/all and search query
   const filteredEvents = formattedEvents
-    .filter((event) => showAllEvents || !event.isPast)
+    .filter((event) =>
+      showAllEvents
+        ? true
+        : (event.status === "live" || event.status === "started" || !event.isPast)
+    )
     .filter((event) =>
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.location.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+  const eventsToShow = filteredEvents.length > 0 ? filteredEvents : formattedEvents;
+
+  // Fallback: If no API events, try using public organizer page URL
+  const ORG_PAGE_URL = import.meta.env.VITE_EVENTBRITE_ORG_PAGE_URL as string | undefined;
+  const [publicLinks, setPublicLinks] = useState<Array<{title: string; url: string}>>([]);
+
+  useEffect(() => {
+    async function fetchPublic() {
+      if (!ORG_PAGE_URL || formattedEvents.length > 0) return;
+      try {
+        const { data, error } = await supabase.functions.invoke("eventbrite_public", { body: { url: ORG_PAGE_URL } });
+        if (!error && data && typeof data === 'object' && 'events' in data) {
+          setPublicLinks((data as any).events as Array<{title: string; url: string}>);
+        }
+      } catch {}
+    }
+    fetchPublic();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ORG_PAGE_URL, formattedEvents.length]);
 
   const handleRegister = (eventUrl: string, eventTitle: string) => {
     window.open(eventUrl, "_blank");
@@ -118,7 +142,7 @@ const Events = () => {
           {/* Events List */}
           {!loading && !error && (
             <div className="space-y-4">
-              {filteredEvents.map((event, index) => (
+              {eventsToShow.map((event, index) => (
                 <motion.div
                   key={event.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -136,10 +160,25 @@ const Events = () => {
                   />
                 </motion.div>
               ))}
+
+              {/* Fallback to public organizer page links when API returned none */}
+              {eventsToShow.length === 0 && publicLinks.length > 0 && (
+                <div className="space-y-3">
+                  {publicLinks.map((link, i) => (
+                    <motion.div key={link.url} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="glass-card rounded-2xl p-4 flex items-center justify-between">
+                      <div className="min-w-0">
+                        <p className="font-serif text-lg font-semibold truncate">{link.title || "Event"}</p>
+                        <a href={link.url} target="_blank" rel="noreferrer" className="text-sm text-gold truncate">{link.url}</a>
+                      </div>
+                      <Button variant="gold" size="sm" onClick={() => handleRegister(link.url, link.title || "Event")}>View on Eventbrite</Button>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {!loading && !error && filteredEvents.length === 0 && (
+          {!loading && !error && filteredEvents.length === 0 && formattedEvents.length === 0 && publicLinks.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No events found</p>
             </div>

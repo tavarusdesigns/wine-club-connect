@@ -117,10 +117,14 @@ export const formatEventbriteEvent = (event: EventbriteEvent) => {
   const startDate = new Date(event.start.local);
   const endDate = new Date(event.end.utc);
   const now = new Date();
-  const isPast = event.status === "ended" || endDate <= now;
+  // Consider 'live' and 'started' as upcoming even if end time has passed due to timezone/API drift
+  const status = (event.status || "").toLowerCase();
+  const isPast = ["ended", "completed", "canceled"].includes(status)
+    || (endDate <= now && !["live", "started"].includes(status));
   
   return {
     id: event.id,
+    status: status,
     title: event.name.text,
     date: startDate.toLocaleDateString("en-US", {
       weekday: "long",
