@@ -22,7 +22,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* Footer logo above bottom nav */}
       <footer className="border-t border-border/40">
         <div className="max-w-5xl mx-auto px-5 py-6 flex items-center justify-center">
-          <img src="/logo.png" alt="Cabernet Wine Club" className="h-5 sm:h-6 w-auto opacity-90 object-contain" />
+          <img src="/logo.png" alt="Cabernet Wine Club" className="h-14 sm:h-[4.5rem] md:h-[5.5rem] lg:h-[6.5rem] w-auto opacity-90 object-contain" />
         </div>
       </footer>
 
