@@ -11,6 +11,10 @@ import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+const phoneSchema = z
+  .string()
+  .min(10, "Please enter a valid phone number")
+  .refine((val) => (val.match(/\d/g) || []).length >= 10, "Please enter a valid phone number");
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -21,7 +25,7 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [referredBy, setReferredBy] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; phone?: string }>({});
   
   const { signIn, signUp, user, isApproved, loading, profile } = useAuth();
   const navigate = useNavigate();
@@ -38,8 +42,23 @@ const Auth = () => {
     }
   }, [user, isApproved, loading, profile, navigate]);
 
+  const normalizePhone = (input: string) => {
+    const digits = (input.match(/\d/g) || []).join("");
+    if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
+    if (digits.length === 10) return "+1" + digits;
+    return digits ? "+" + digits : "";
+  };
+
+  const formatPhonePretty = (input: string) => {
+    const digits = (input.match(/\d/g) || []).join("");
+    const parts = [digits.slice(0,3), digits.slice(3,6), digits.slice(6,10)];
+    if (digits.length <= 3) return parts[0];
+    if (digits.length <= 6) return `(${parts[0]}) ${parts[1]}`.trim();
+    return `(${parts[0]}) ${parts[1]}-${parts[2]}`.trim();
+  };
+
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { email?: string; password?: string; phone?: string } = {};
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -49,6 +68,13 @@ const Auth = () => {
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
+    }
+
+    if (isSignUp) {
+      const phoneResult = phoneSchema.safeParse(phone);
+      if (!phoneResult.success) {
+        newErrors.phone = phoneResult.error.errors[0].message;
+      }
     }
     
     setErrors(newErrors);
@@ -64,7 +90,7 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password, firstName, lastName, phone || null, referredBy || null);
+        const { error } = await signUp(email, password, firstName, lastName, normalizePhone(phone) || null, referredBy || null);
         if (error) {
           if (error.message.includes("already registered")) {
             toast.error("This email is already registered. Please sign in instead.");
@@ -181,11 +207,15 @@ const Auth = () => {
                      id="phone"
                      type="tel"
                      value={phone}
-                     onChange={(e) => setPhone(e.target.value)}
+                     onChange={(e) => setPhone(formatPhonePretty(e.target.value))}
                      placeholder="(555) 555-5555"
                      className="bg-secondary border-border"
                      inputMode="tel"
+                     required
                    />
+                   {errors.phone && (
+                     <p className="text-sm text-destructive">{errors.phone}</p>
+                   )}
                  </div>
                  <div className="space-y-2">
                    <Label htmlFor="referredBy">Referred By</Label>
