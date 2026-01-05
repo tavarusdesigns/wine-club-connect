@@ -19,7 +19,14 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   isApproved: boolean;
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    phone?: string | null,
+    referredBy?: string | null
+  ) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -64,8 +71,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id).then(setProfile);
+          setTimeout(async () => {
+            const p = await fetchProfile(session.user.id);
+            // Sync auth metadata into profile if missing
+            const meta = session.user.user_metadata || {};
+            if (p) {
+              const updates: Record<string, any> = {};
+              if (meta.phone && p.phone !== meta.phone) updates.phone = meta.phone;
+              if (meta.referred_by && (p as any).referred_by !== meta.referred_by) updates.referred_by = meta.referred_by;
+              if (Object.keys(updates).length) {
+                await supabase.from("profiles").update(updates).eq("user_id", session.user.id);
+              }
+            }
+            const updated = await fetchProfile(session.user.id);
+            setProfile(updated);
           }, 0);
         } else {
           setProfile(null);
@@ -90,7 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, phone?: string | null, referredBy?: string | null) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -101,6 +120,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         data: {
           first_name: firstName,
           last_name: lastName,
+          phone: phone ?? null,
+          referred_by: referredBy ?? null,
         },
       },
     });

@@ -18,6 +18,8 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [referredBy, setReferredBy] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
@@ -62,7 +64,7 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password, firstName, lastName);
+        const { error } = await signUp(email, password, firstName, lastName, phone || null, referredBy || null);
         if (error) {
           if (error.message.includes("already registered")) {
             toast.error("This email is already registered. Please sign in instead.");
@@ -142,35 +144,62 @@ const Auth = () => {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignUp && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="firstName"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="John"
-                      className="pl-10 bg-secondary border-border"
-                      required={isSignUp}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Doe"
-                    className="bg-secondary border-border"
-                    required={isSignUp}
-                  />
-                </div>
-              </div>
-            )}
+           {isSignUp && (
+             <>
+               <div className="grid grid-cols-2 gap-3">
+                 <div className="space-y-2">
+                   <Label htmlFor="firstName">First Name</Label>
+                   <div className="relative">
+                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                     <Input
+                       id="firstName"
+                       value={firstName}
+                       onChange={(e) => setFirstName(e.target.value)}
+                       placeholder="John"
+                       className="pl-10 bg-secondary border-border"
+                       required={isSignUp}
+                     />
+                   </div>
+                 </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="lastName">Last Name</Label>
+                   <Input
+                     id="lastName"
+                     value={lastName}
+                     onChange={(e) => setLastName(e.target.value)}
+                     placeholder="Doe"
+                     className="bg-secondary border-border"
+                     required={isSignUp}
+                   />
+                 </div>
+               </div>
+
+               <div className="grid grid-cols-1 gap-3">
+                 <div className="space-y-2">
+                   <Label htmlFor="phone">Mobile Phone #</Label>
+                   <Input
+                     id="phone"
+                     type="tel"
+                     value={phone}
+                     onChange={(e) => setPhone(e.target.value)}
+                     placeholder="(555) 555-5555"
+                     className="bg-secondary border-border"
+                     inputMode="tel"
+                   />
+                 </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="referredBy">Referred By</Label>
+                   <Input
+                     id="referredBy"
+                     value={referredBy}
+                     onChange={(e) => setReferredBy(e.target.value)}
+                     placeholder="e.g., Friend's name or source"
+                     className="bg-secondary border-border"
+                   />
+                 </div>
+               </div>
+             </>
+           )}
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
