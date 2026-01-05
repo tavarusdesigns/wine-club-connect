@@ -9,21 +9,24 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useEventbrite, formatEventbriteEvent } from "@/hooks/useEventbrite";
+const DEFAULT_ORG_ID = import.meta.env.VITE_EVENTBRITE_ORG_ID as string | undefined;
 
 const Events = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+  const [selectedOrgId, setSelectedOrgId] = useState<string>(DEFAULT_ORG_ID || "");
   const [showAllEvents, setShowAllEvents] = useState(false);
 
   const { events, loading, error, organizations, fetchOrganizations, fetchEvents } =
-    useEventbrite();
+    useEventbrite(DEFAULT_ORG_ID);
 
   useEffect(() => {
-    fetchOrganizations();
+    if (!DEFAULT_ORG_ID) {
+      fetchOrganizations();
+    }
   }, [fetchOrganizations]);
 
   useEffect(() => {
-    if (!selectedOrgId && organizations.length > 0) {
+    if (!DEFAULT_ORG_ID && !selectedOrgId && organizations.length > 0) {
       setSelectedOrgId(organizations[0].id);
     }
   }, [organizations, selectedOrgId]);

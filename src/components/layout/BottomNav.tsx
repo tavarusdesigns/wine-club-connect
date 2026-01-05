@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/" },
-  { icon: Calendar, label: "Events", path: "/events" },
+  { icon: Calendar, label: "Upcoming Tastings & Events", path: "/events" },
   { icon: Package, label: "Orders", path: "/orders" },
-  { icon: Gift, label: "Bonus", path: "/bonus" },
+  { icon: Gift, label: "Wines of Month", path: "/bonus" },
 ];
 
 const BottomNav = () => {
