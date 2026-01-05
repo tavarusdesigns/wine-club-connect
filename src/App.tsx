@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Events from "./pages/Events";
 import Orders from "./pages/Orders";
 import Bonus from "./pages/Bonus";
+import Notifications from "@/pages/Notifications";
 import Auth from "./pages/Auth";
 import PendingApproval from "./pages/PendingApproval";
 import Admin from "./pages/Admin";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
             <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
             <Route path="/bonus" element={<ProtectedRoute><Bonus /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

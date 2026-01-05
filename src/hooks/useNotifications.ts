@@ -184,6 +184,20 @@ export const useNotifications = () => {
     },
   });
 
+  const deleteNotifications = useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!ids || ids.length === 0) return;
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
   const requestPermission = useCallback(async () => {
     return await requestNotificationPermission();
   }, []);
@@ -194,6 +208,7 @@ export const useNotifications = () => {
     isLoading,
     markAsRead,
     markAllAsRead,
+    deleteNotifications,
     requestPermission,
     permissionGranted: typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted",
   };

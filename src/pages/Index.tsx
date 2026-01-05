@@ -13,6 +13,7 @@ import { useEventbrite, formatEventbriteEvent } from "@/hooks/useEventbrite";
 const DEFAULT_ORG_ID = import.meta.env.VITE_EVENTBRITE_ORG_ID as string | undefined;
 import { useWineOrders } from "@/hooks/useWineOrders";
 import { useWineBonuses } from "@/hooks/useWineBonuses";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface Profile {
   first_name: string | null;
@@ -28,6 +29,7 @@ const Index = () => {
   const { events } = useEventbrite(DEFAULT_ORG_ID);
   const { orders } = useWineOrders();
   const { bonuses } = useWineBonuses();
+  const { notifications } = useNotifications();
 
   useEffect(() => {
     if (user) {
@@ -141,27 +143,43 @@ const Index = () => {
           ))}
         </motion.div>
 
-        {/* Monthly Bonus Highlight */}
-        {unclaimedBonuses > 0 && (
+        {/* Notification Alert / Monthly Bonus Highlight */}
+        {(unclaimedBonuses > 0 || (notifications && notifications.length > 0)) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Link to="/bonus" className="block">
+            <Link
+              to={notifications && notifications[0]?.type === "new_event"
+                ? "/events"
+                : notifications && notifications[0]?.type === "order_status"
+                ? "/orders"
+                : "/bonus"}
+              className="block"
+            >
               <div className="relative overflow-hidden rounded-2xl wine-gradient p-5">
                 <div className="absolute top-2 right-2 opacity-20">
                   <Sparkles className="w-20 h-20 text-gold" />
                 </div>
                 <div className="relative flex items-center justify-between">
+                  <Link to="/notifications" className="absolute top-0 right-0 text-primary-foreground/80 hover:text-primary-foreground">
+                    <NotificationBell />
+                  </Link>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full gold-gradient flex items-center justify-center">
                       <Gift className="w-6 h-6 text-accent-foreground" />
                     </div>
                     <div>
-                      <p className="text-sm text-primary-foreground/70">Wines of the Month</p>
-                      <p className="font-serif text-lg font-semibold text-primary-foreground">
-                        Ready to Claim
+                      <p className="text-sm text-primary-foreground/70">
+                        {notifications && notifications[0]
+                          ? `Alert: ${notifications[0].title}`
+                          : "Wines of the Month"}
+                      </p>
+                      <p className="font-serif text-lg font-semibold text-primary-foreground line-clamp-2">
+                        {notifications && notifications[0]
+                          ? notifications[0].message
+                          : "Ready to pick up at Cabernet Steakhouse"}
                       </p>
                     </div>
                   </div>

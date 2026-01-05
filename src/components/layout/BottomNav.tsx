@@ -1,17 +1,20 @@
-import { Home, Calendar, Package, Gift } from "lucide-react";
+import { Home, Calendar, Package, Gift, Bell } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/" },
   { icon: Calendar, label: "Upcoming Tastings & Events", path: "/events" },
   { icon: Package, label: "Orders", path: "/orders" },
   { icon: Gift, label: "Wines of Month", path: "/bonus" },
-];
+  { icon: Bell, label: "Notifications", path: "/notifications", showBadge: true },
+] as const;
 
 const BottomNav = () => {
   const location = useLocation();
+  const { unreadCount } = useNotifications();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-border/30 safe-area-pb">
@@ -45,6 +48,11 @@ const BottomNav = () => {
               >
                 {item.label}
               </span>
+              {"showBadge" in item && item.showBadge && unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-gold text-[10px] text-black font-semibold flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
             </NavLink>
           );
         })}
