@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Wine, Plus, Trash2, Eye, EyeOff, Calendar, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,8 +47,27 @@ const WineBonusesTab = () => {
   const [pickupDialogOpen, setPickupDialogOpen] = useState<string | null>(null);
   const [pickups, setPickups] = useState<Array<{ user_id: string; first_name: string | null; last_name: string | null; phone: string | null; referred_by?: string | null; received_at: string | null }>>([]);
   const [pickupsLoading, setPickupsLoading] = useState(false);
+  const [pickupSearch, setPickupSearch] = useState("");
+  const [onlyNotPicked, setOnlyNotPicked] = useState(false);
+  const [pickupCounts, setPickupCounts] = useState<Record<string, { picked: number; total: number }>>({});
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [addWineDialogOpen, setAddWineDialogOpen] = useState<string | null>(null);
+  const filteredPickups = useMemo(() => {
+    const term = pickupSearch.trim().toLowerCase();
+    const termDigits = (pickupSearch.match(/\d/g) || []).join("");
+    return pickups.filter(m => {
+      const name = `${m.first_name || ''} ${m.last_name || ''}`.toLowerCase();
+      const phone = (m.phone || '').toLowerCase();
+      const phoneDigits = ((m.phone || '').match(/\d/g) || []).join("");
+      const ref = (m.referred_by || '').toLowerCase();
+      const uid = (m.user_id || '').toLowerCase();
+      const matchesText = !term || name.includes(term) || phone.includes(term) || ref.includes(term) || uid.includes(term);
+      const matchesDigits = !termDigits || phoneDigits.includes(termDigits);
+      const matchesTerm = matchesText || matchesDigits;
+      const matchesPicked = !onlyNotPicked || !m.received_at;
+      return matchesTerm && matchesPicked;
+    });
+  }, [pickups, pickupSearch, onlyNotPicked]);
   const [newWine, setNewWine] = useState({
     name: "",
     vintage_year: "",
@@ -206,6 +225,11 @@ const WineBonusesTab = () => {
                   <CardTitle className="font-serif text-lg flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gold" />
                     {MONTHS[bonus.month - 1]} {bonus.year}
+                    {pickupCounts[bonus.id] && (
+                      <span className="ml-2 inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground border border-border">
+                        {pickupCounts[bonus.id].picked}/{pickupCounts[bonus.id].total}
+                      </span>
+                    )}
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
@@ -228,6 +252,8 @@ const WineBonusesTab = () => {
                           const list = await getBonusPickups(bonus.id);
                           setPickups(list);
                           setPickupsLoading(false);
+                          const picked = list.filter((m) => !!m.received_at).length;
+                          setPickupCounts((prev) => ({ ...prev, [bonus.id]: { picked, total: list.length } }));
                         }}
                       >
                         <Check className="w-4 h-4 mr-1" /> Manage Pickups
@@ -382,8 +408,55 @@ const WineBonusesTab = () => {
                   {pickupsLoading ? (
                     <div className="py-8 text-center text-muted-foreground">Loading...</div>
                   ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {pickups.map((m) => {
+                    <>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <input
+                          value={pickupSearch}
+                          onChange={(e) => setPickupSearch(e.target.value)}
+                          placeholder="Search by name, phone, referred by..."
+                          className="w-full rounded-md border border-border bg-secondary px-3 py-2 text-sm"
+                        />
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Switch checked={onlyNotPicked} onCheckedChange={setOnlyNotPicked} />
+                            Only not picked up
+                          </label>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Export current view as CSV
+                              const header = ["User ID","First Name","Last Name","Phone","Referred By","Picked Up","Received At"]; 
+                              const rows = filteredPickups.map(m => [
+                                m.user_id,
+                                m.first_name || "",
+                                m.last_name || "",
+                                m.phone || "",
+                                m.referred_by || "",
+                                m.received_at ? "Yes" : "No",
+                                m.received_at || ""
+                              ]);
+                              const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
+                              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = `pickups_${bonus.year}_${bonus.month}.csv`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                            }}
+                          >
+                            Export CSV
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {filteredPickups.length === 0 ? (
+                        <div className="py-8 text-center text-muted-foreground text-sm">No matches found</div>
+                      ) : (
+                        filteredPickups.map((m) => {
                         const name = [m.first_name, m.last_name].filter(Boolean).join(" ") || m.user_id.slice(0, 8);
                         const picked = !!m.received_at;
                         return (
@@ -404,8 +477,10 @@ const WineBonusesTab = () => {
                             </div>
                           </div>
                         );
-                      })}
+                      })
+                      )}
                     </div>
+                    </>
                   )}
                 </DialogContent>
               </Dialog>

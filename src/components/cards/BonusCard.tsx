@@ -1,5 +1,4 @@
 import { Gift, Wine, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 interface BonusWine {
@@ -16,10 +15,11 @@ interface BonusCardProps {
   year: number;
   wines: BonusWine[];
   isAvailable: boolean;
-  onClaim?: () => void;
+  pickedUp?: boolean;
+  pickedUpAt?: string | null;
 }
 
-const BonusCard = ({ month, year, wines, isAvailable, onClaim }: BonusCardProps) => {
+const BonusCard = ({ month, year, wines, isAvailable, pickedUp, pickedUpAt }: BonusCardProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}

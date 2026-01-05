@@ -321,6 +321,19 @@ export function useAdmin() {
     }
   }
 
+  async function getBonusPickupCount(bonusId: string): Promise<{ picked: number; total: number }> {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id");
+    const total = profiles?.length || 0;
+    const { count } = await supabase
+      .from("user_bonus_claims")
+      .select("received_at", { count: "exact", head: true })
+      .eq("bonus_id", bonusId)
+      .not("received_at", "is", null);
+    return { picked: count || 0, total };
+  }
+
   return {
     isAdmin,
     loading,
@@ -344,5 +357,6 @@ export function useAdmin() {
     updateUserContact,
     getBonusPickups,
     setBonusPickup,
+    getBonusPickupCount,
   };
 }
