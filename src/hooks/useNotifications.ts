@@ -193,7 +193,21 @@ export const useNotifications = () => {
         .in("id", ids);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (ids: string[]) => {
+      await queryClient.cancelQueries({ queryKey: ["notifications", user?.id] });
+      const prev = queryClient.getQueryData<Notification[]>(["notifications", user?.id]);
+      if (prev) {
+        const next = prev.filter(n => !ids.includes(n.id));
+        queryClient.setQueryData(["notifications", user?.id], next);
+      }
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) {
+        queryClient.setQueryData(["notifications", user?.id], ctx.prev);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
