@@ -127,7 +127,11 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 wine-gradient opacity-90" />
+        <img
+          src="https://studio.pinotspalette.com/naperville/images/nap-wineglasses-fullsize.jpg"
+          alt="Background wine glasses"
+          className="absolute inset-0 w-full h-full object-cover object-[50%_30%] sm:object-[50%_25%] md:object-center opacity-20 pointer-events-none select-none"
+        />
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-gold/10" />
         
         <div className="relative px-6 pt-16 pb-12 safe-area-pt text-center">
