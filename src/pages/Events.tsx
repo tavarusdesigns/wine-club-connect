@@ -1,103 +1,93 @@
 import { motion } from "framer-motion";
-import { Search, Filter, Loader2 } from "lucide-react";
+import { Search, Filter, Loader2, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
-import EventCard from "@/components/cards/EventCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useEventbrite, formatEventbriteEvent } from "@/hooks/useEventbrite";
-const DEFAULT_ORG_ID = import.meta.env.VITE_EVENTBRITE_ORG_ID as string | undefined;
+import { supabase } from "@/integrations/supabase/client";
 
 const Events = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedOrgId, setSelectedOrgId] = useState<string>(DEFAULT_ORG_ID || "");
-  const [showAllEvents, setShowAllEvents] = useState(false);
+  const [links, setLinks] = useState<Array<{ title: string; url: string }>>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { events, loading, error, organizations, fetchOrganizations, fetchEvents } =
-    useEventbrite(DEFAULT_ORG_ID);
-
-  useEffect(() => {
-    if (!DEFAULT_ORG_ID) {
-      fetchOrganizations();
-    }
-  }, [fetchOrganizations]);
-
-  useEffect(() => {
-    if (!DEFAULT_ORG_ID && !selectedOrgId && organizations.length > 0) {
-      setSelectedOrgId(organizations[0].id);
-    }
-  }, [organizations, selectedOrgId]);
-
-  useEffect(() => {
-    if (selectedOrgId) {
-      fetchEvents(selectedOrgId);
-    }
-  }, [selectedOrgId, fetchEvents]);
-
-  const formattedEvents = events.map(formatEventbriteEvent);
-
-  // Filter by active/all and search query
-  const filteredEvents = formattedEvents
-    .filter((event) =>
-      showAllEvents
-        ? true
-        : (event.status === "live" || event.status === "started" || !event.isPast)
-    )
-    .filter((event) =>
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-  const eventsToShow = filteredEvents.length > 0 ? filteredEvents : formattedEvents;
-
-  // Fallback: If no API events, try using public organizer page URL
   const ORG_PAGE_URL = import.meta.env.VITE_EVENTBRITE_ORG_PAGE_URL as string | undefined;
-  const [publicLinks, setPublicLinks] = useState<Array<{title: string; url: string}>>([]);
+  const SUPA_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const SUPA_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+
+  const fetchOrganizerPage = async () => {
+    if (!ORG_PAGE_URL) {
+      setError("Organizer page URL is not configured.");
+      setLinks([]);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      // Primary: supabase-js invoke
+      const { data, error } = await supabase.functions.invoke("eventbrite_public", {
+        body: { url: ORG_PAGE_URL },
+      });
+      let payload: any = null;
+      if (!error && data) {
+        payload = data;
+      } else {
+        // Fallback: direct fetch to Edge Function endpoint
+        if (!SUPA_URL || !SUPA_KEY) throw new Error("Supabase URL or key missing");
+        const res = await fetch(`${SUPA_URL}/functions/v1/eventbrite_public`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPA_KEY,
+          },
+          body: JSON.stringify({ url: ORG_PAGE_URL }),
+        });
+        if (!res.ok) throw new Error(`Edge function HTTP ${res.status}`);
+        payload = await res.json();
+      }
+
+      if (payload && typeof payload === "object" && "events" in payload) {
+        const arr = (payload as any).events as Array<{ title: string; url: string }>;
+        setLinks(arr || []);
+      } else {
+        setLinks([]);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load events";
+      setError(msg);
+      setLinks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchPublic() {
-      if (!ORG_PAGE_URL || formattedEvents.length > 0) return;
-      try {
-        const { data, error } = await supabase.functions.invoke("eventbrite_public", { body: { url: ORG_PAGE_URL } });
-        if (!error && data && typeof data === 'object' && 'events' in data) {
-          setPublicLinks((data as any).events as Array<{title: string; url: string}>);
-        }
-      } catch {}
-    }
-    fetchPublic();
+    fetchOrganizerPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ORG_PAGE_URL, formattedEvents.length]);
+  }, [ORG_PAGE_URL]);
 
-  const handleRegister = (eventUrl: string, eventTitle: string) => {
-    window.open(eventUrl, "_blank");
-    toast.success(`Opening registration!`, {
-      description: `Registering for ${eventTitle}`,
-    });
+  const handleOpen = (url: string, title: string) => {
+    window.open(url, "_blank");
+    toast.success("Opening Eventbrite", { description: title });
   };
+
+  const filtered = links.filter((l) =>
+    (l.title || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <AppLayout>
       <div className="px-5 pt-12 pb-6 safe-area-pt">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-3xl font-serif font-bold text-foreground">
-              Events
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Discover upcoming tastings & experiences
-            </p>
+            <h1 className="text-3xl font-serif font-bold text-foreground">Events</h1>
+            <p className="text-muted-foreground mt-1">Discover upcoming tastings & experiences</p>
           </div>
 
-
-          {/* Search & Toggle */}
+          {/* Search */}
           <div className="space-y-3">
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -109,78 +99,61 @@ const Events = () => {
                   className="pl-10 bg-secondary border-border"
                 />
               </div>
-              <Button variant="glass" size="icon">
+              <Button variant="glass" size="icon" onClick={fetchOrganizerPage} title="Refresh">
                 <Filter className="w-4 h-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="show-past"
-                checked={showAllEvents}
-                onCheckedChange={setShowAllEvents}
-              />
-              <Label htmlFor="show-past" className="text-sm text-muted-foreground cursor-pointer">
-                Show past events
-              </Label>
-            </div>
           </div>
 
-          {/* Loading State */}
+          {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           )}
 
-          {/* Error State */}
+          {/* Error */}
           {error && !loading && (
-            <div className="text-center py-12">
+            <div className="text-center py-8 space-y-3">
               <p className="text-destructive">{error}</p>
+              <Button variant="gold" size="sm" onClick={fetchOrganizerPage}>Retry</Button>
             </div>
           )}
 
-          {/* Events List */}
+          {/* Organizer links */}
           {!loading && !error && (
-            <div className="space-y-4">
-              {eventsToShow.map((event, index) => (
+            <div className="space-y-3">
+              {filtered.map((link, i) => (
                 <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  key={link.url}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="glass-card rounded-2xl p-4 flex items-center justify-between"
                 >
-                  <EventCard
-                    title={event.title}
-                    date={event.date}
-                    time={event.time}
-                    location={event.location}
-                    spotsLeft={event.hasAvailableTickets ? undefined : 0}
-                    image={event.image || undefined}
-                    onRegister={() => handleRegister(event.url, event.title)}
-                  />
+                  <div className="min-w-0">
+                    <p className="font-serif text-lg font-semibold truncate">{link.title || "Event"}</p>
+                    <a href={link.url} target="_blank" rel="noreferrer" className="text-sm text-gold truncate flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3" /> {link.url}
+                    </a>
+                  </div>
+                  <Button variant="gold" size="sm" onClick={() => handleOpen(link.url, link.title || "Event")}>
+                    View on Eventbrite
+                  </Button>
                 </motion.div>
               ))}
-
-              {/* Fallback to public organizer page links when API returned none */}
-              {eventsToShow.length === 0 && publicLinks.length > 0 && (
-                <div className="space-y-3">
-                  {publicLinks.map((link, i) => (
-                    <motion.div key={link.url} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="glass-card rounded-2xl p-4 flex items-center justify-between">
-                      <div className="min-w-0">
-                        <p className="font-serif text-lg font-semibold truncate">{link.title || "Event"}</p>
-                        <a href={link.url} target="_blank" rel="noreferrer" className="text-sm text-gold truncate">{link.url}</a>
-                      </div>
-                      <Button variant="gold" size="sm" onClick={() => handleRegister(link.url, link.title || "Event")}>View on Eventbrite</Button>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
-          {!loading && !error && filteredEvents.length === 0 && formattedEvents.length === 0 && publicLinks.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No events found</p>
+          {!loading && !error && filtered.length === 0 && (
+            <div className="text-center py-12 space-y-3">
+              <p className="text-muted-foreground">No events found from the organizer page.</p>
+              {ORG_PAGE_URL && (
+                <a href={ORG_PAGE_URL} target="_blank" rel="noreferrer" className="inline-block">
+                  <Button variant="gold" size="sm">Open Organizer Page</Button>
+                </a>
+              )}
+              <p className="text-xs text-muted-foreground">Ensure the Supabase function 'eventbrite_public' is deployed.</p>
             </div>
           )}
         </motion.div>
