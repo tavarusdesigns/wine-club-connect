@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Wine, Plus, Trash2, Eye, EyeOff, Calendar } from "lucide-react";
+import { Wine, Plus, Trash2, Eye, EyeOff, Calendar, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,10 +38,15 @@ const WineBonusesTab = () => {
     deleteBonus,
     addWineToBonus,
     removeWineFromBonus,
+    getBonusPickups,
+    setBonusPickup,
   } = useAdmin();
 
   const [newBonusMonth, setNewBonusMonth] = useState<string>("");
   const [newBonusYear, setNewBonusYear] = useState<string>(new Date().getFullYear().toString());
+  const [pickupDialogOpen, setPickupDialogOpen] = useState<string | null>(null);
+  const [pickups, setPickups] = useState<Array<{ user_id: string; first_name: string | null; last_name: string | null; phone: string | null; referred_by?: string | null; received_at: string | null }>>([]);
+  const [pickupsLoading, setPickupsLoading] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [addWineDialogOpen, setAddWineDialogOpen] = useState<string | null>(null);
   const [newWine, setNewWine] = useState({
@@ -213,6 +218,20 @@ const WineBonusesTab = () => {
                         checked={bonus.is_available}
                         onCheckedChange={() => handleToggleAvailability(bonus.id, bonus.is_available)}
                       />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-2"
+                        onClick={async () => {
+                          setPickupDialogOpen(bonus.id);
+                          setPickupsLoading(true);
+                          const list = await getBonusPickups(bonus.id);
+                          setPickups(list);
+                          setPickupsLoading(false);
+                        }}
+                      >
+                        <Check className="w-4 h-4 mr-1" /> Manage Pickups
+                      </Button>
                     </div>
                     <Button
                       size="icon"
@@ -354,7 +373,43 @@ const WineBonusesTab = () => {
                     </div>
                   </DialogContent>
                 </Dialog>
-              </CardContent>
+              {/* Manage Pickups Dialog */}
+              <Dialog open={pickupDialogOpen === bonus.id} onOpenChange={(open) => setPickupDialogOpen(open ? bonus.id : null)}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="font-serif">Manage Pickups for {MONTHS[bonus.month - 1]} {bonus.year}</DialogTitle>
+                  </DialogHeader>
+                  {pickupsLoading ? (
+                    <div className="py-8 text-center text-muted-foreground">Loading...</div>
+                  ) : (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {pickups.map((m) => {
+                        const name = [m.first_name, m.last_name].filter(Boolean).join(" ") || m.user_id.slice(0, 8);
+                        const picked = !!m.received_at;
+                        return (
+                          <div key={m.user_id} className="flex items-center justify-between gap-3 rounded-md border border-border bg-secondary p-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{name}</p>
+                              <p className="text-xs text-muted-foreground truncate">{m.phone || "No phone"}{m.referred_by ? ` • Referred by: ${m.referred_by}` : ""}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">{picked ? "Picked up" : "Not picked up"}</span>
+                              <Switch
+                                checked={picked}
+                                onCheckedChange={async (val) => {
+                                  await setBonusPickup(bonus.id, m.user_id, val);
+                                  setPickups((prev) => prev.map((p) => p.user_id === m.user_id ? { ...p, received_at: val ? new Date().toISOString() : null } : p));
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </CardContent>
             </Card>
 
             

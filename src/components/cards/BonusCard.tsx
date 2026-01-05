@@ -84,29 +84,18 @@ const BonusCard = ({ month, year, wines, isAvailable, onClaim }: BonusCardProps)
           ))}
         </div>
 
-        {isAvailable && (
-          <div className="space-y-2">
-            <p className="text-xs text-primary-foreground/70 text-center">
-              Pick up at Cabernet Steakhouse
-            </p>
-            <Button
-              variant="gold"
-              className="w-full"
-              onClick={onClaim}
-            >
-              <Gift className="w-4 h-4 mr-2" />
-              Claim Your Wines
-            </Button>
-          </div>
-        )}
-
-        {!isAvailable && (
+        <div className="space-y-2">
+          <p className="text-xs text-primary-foreground/70 text-center">
+            Pick up at Cabernet Steakhouse
+          </p>
           <div className="text-center py-2">
-            <p className="text-sm text-primary-foreground/60">
-              Already claimed ✓
-            </p>
+            {pickedUp ? (
+              <p className="text-sm text-primary-foreground/80">Picked up ✓{pickedUpAt ? ` • ${new Date(pickedUpAt).toLocaleDateString()}` : ""}</p>
+            ) : (
+              <p className="text-sm text-primary-foreground/80">Not picked up yet</p>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </motion.div>
   );

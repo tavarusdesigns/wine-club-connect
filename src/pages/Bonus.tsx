@@ -6,22 +6,9 @@ import { toast } from "sonner";
 import { useWineBonuses } from "@/hooks/useWineBonuses";
 
 const Bonus = () => {
-  const { bonuses, isLoading, claimBonus, getMonthName, totalClaimed } = useWineBonuses();
+  const { bonuses, isLoading, getMonthName, totalClaimed } = useWineBonuses();
 
-  const handleClaim = (bonusId: string, month: string) => {
-    claimBonus.mutate(bonusId, {
-      onSuccess: () => {
-        toast.success(`Bonus claimed!`, {
-          description: `Your ${month} bonus wine has been added to your next pickup.`,
-        });
-      },
-      onError: (error) => {
-        toast.error("Failed to claim bonus", {
-          description: error.message,
-        });
-      },
-    });
-  };
+  // Members no longer claim; admin marks pickup in admin dashboard.
 
   const availableBonuses = bonuses.filter(b => b.is_available && !b.isClaimed);
   const claimedBonuses = bonuses.filter(b => b.isClaimed || !b.is_available);
@@ -127,8 +114,9 @@ const Bonus = () => {
                             image_url: w.image_url || undefined,
                             member_price: w.member_price || undefined,
                           }))}
-                          isAvailable={!bonus.isClaimed}
-                          onClaim={!bonus.isClaimed ? () => handleClaim(bonus.id, monthName) : undefined}
+                          isAvailable
+                          pickedUp={bonus.isPickedUp}
+                          pickedUpAt={bonus.received_at || null}
                         />
                       </motion.div>
                     );
@@ -163,6 +151,8 @@ const Bonus = () => {
                             member_price: w.member_price || undefined,
                           }))}
                           isAvailable={false}
+                          pickedUp={bonus.isPickedUp}
+                          pickedUpAt={bonus.received_at || null}
                         />
                       </motion.div>
                     );

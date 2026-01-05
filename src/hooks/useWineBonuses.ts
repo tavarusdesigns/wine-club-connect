@@ -49,26 +49,33 @@ export const useWineBonuses = () => {
 
       if (winesError) throw winesError;
 
-      // Fetch user's claims
-      let userClaims: string[] = [];
+      // Fetch user's claims including pickup status
+      let userClaimsMap: Record<string, { received_at: string | null }> = {};
       if (user) {
         const { data: claimsData } = await supabase
           .from("user_bonus_claims")
           .select("bonus_id, received_at")
           .eq("user_id", user.id);
-        
-        userClaims = claimsData?.map(c => c.bonus_id) || [];
+        (claimsData || []).forEach((c: any) => {
+          userClaimsMap[c.bonus_id] = { received_at: c.received_at };
+        });
       }
 
-      // Map bonuses with their wines and claim status only
-      return bonusData.map(bonus => ({
-        id: bonus.id,
-        month: bonus.month,
-        year: bonus.year,
-        is_available: bonus.is_available,
-        wines: winesData.filter(w => w.bonus_id === bonus.id),
-        isClaimed: userClaims.includes(bonus.id),
-      })) as MonthlyBonus[];
+      // Map bonuses with their wines and claim/pickup status
+      return bonusData.map((bonus: any) => {
+        const claim = userClaimsMap[bonus.id];
+        const received_at = claim?.received_at ?? null;
+        return {
+          id: bonus.id,
+          month: bonus.month,
+          year: bonus.year,
+          is_available: bonus.is_available,
+          wines: (winesData || []).filter((w: any) => w.bonus_id === bonus.id),
+          isClaimed: !!claim,
+          received_at,
+          isPickedUp: !!received_at,
+        } as MonthlyBonus;
+      }) as MonthlyBonus[];
     },
     enabled: !!user,
   });

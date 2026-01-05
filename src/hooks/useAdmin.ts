@@ -2,6 +2,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
+interface MemberPickup {
+  user_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  referred_by?: string | null;
+  received_at: string | null;
+}
+
 interface PendingUser {
   id: string;
   user_id: string;
@@ -274,6 +283,44 @@ export function useAdmin() {
     return { error };
   }
 
+  async function getBonusPickups(bonusId: string): Promise<MemberPickup[]> {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, first_name, last_name, phone, referred_by");
+    const { data: claims } = await supabase
+      .from("user_bonus_claims")
+      .select("user_id, received_at")
+      .eq("bonus_id", bonusId);
+    const claimMap = new Map((claims || []).map((c: any) => [c.user_id, c.received_at]));
+    return (profiles || []).map((p: any) => ({
+      user_id: p.user_id,
+      first_name: p.first_name,
+      last_name: p.last_name,
+      phone: p.phone,
+      referred_by: p.referred_by,
+      received_at: claimMap.get(p.user_id) || null,
+    }));
+  }
+
+  async function setBonusPickup(bonusId: string, userId: string, pickedUp: boolean) {
+    if (pickedUp) {
+      // Upsert claim and set received_at to now
+      const { error } = await supabase.from("user_bonus_claims").upsert(
+        { bonus_id: bonusId, user_id: userId, received_at: new Date().toISOString() },
+        { onConflict: "user_id,bonus_id" }
+      );
+      return { error };
+    } else {
+      // Clear received_at
+      const { error } = await supabase
+        .from("user_bonus_claims")
+        .update({ received_at: null })
+        .eq("bonus_id", bonusId)
+        .eq("user_id", userId);
+      return { error };
+    }
+  }
+
   return {
     isAdmin,
     loading,
@@ -295,5 +342,7 @@ export function useAdmin() {
     addWineToBonus,
     removeWineFromBonus,
     updateUserContact,
+    getBonusPickups,
+    setBonusPickup,
   };
 }
