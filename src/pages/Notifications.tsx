@@ -82,11 +82,16 @@ export default function NotificationsPage() {
                   <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">{n.message}</p>
                   <p className="text-xs text-muted-foreground mt-2">{formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}</p>
                 </div>
-                {!n.is_read && (
-                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); markAsRead.mutate(n.id); }}>
-                    <CheckCircle2 className="w-4 h-4 mr-1" /> Mark read
+                <div className="flex items-center gap-1">
+                  {!n.is_read && (
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); markAsRead.mutate(n.id); }}>
+                      <CheckCircle2 className="w-4 h-4 mr-1" /> Mark read
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); deleteNotifications.mutate([n.id]); }}>
+                    <Trash2 className="w-4 h-4 mr-1" /> Delete
                   </Button>
-                )}
+                </div>
               </motion.div>
             ))}
           </div>
