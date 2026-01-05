@@ -9,7 +9,8 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { useEventbrite } from "@/hooks/useEventbrite";
+import { useEventbrite, formatEventbriteEvent } from "@/hooks/useEventbrite";
+const DEFAULT_ORG_ID = import.meta.env.VITE_EVENTBRITE_ORG_ID as string | undefined;
 import { useWineOrders } from "@/hooks/useWineOrders";
 import { useWineBonuses } from "@/hooks/useWineBonuses";
 
@@ -24,7 +25,7 @@ const Index = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const { events } = useEventbrite();
+  const { events } = useEventbrite(DEFAULT_ORG_ID);
   const { orders } = useWineOrders();
   const { bonuses } = useWineBonuses();
 
@@ -46,8 +47,15 @@ const Index = () => {
     ? new Date(profile.created_at).getFullYear().toString()
     : new Date().getFullYear().toString();
   
-  // Calculate real counts
-  const upcomingEvents = events?.filter(e => new Date(e.start?.local || "") >= new Date()).length || 0;
+  // Calculate real counts and next live event
+  const now = new Date();
+  const nextLiveEventRaw = (events || [])
+    .filter(e => e.status === "live" && new Date(e.start?.local || "") >= now)
+    .sort((a, b) => new Date(a.start.local).getTime() - new Date(b.start.local).getTime())[0];
+  const nextLiveEvent = nextLiveEventRaw ? formatEventbriteEvent(nextLiveEventRaw) : null;
+
+  const upcomingEvents = (events || [])
+    .filter(e => new Date(e.start?.local || "") >= now && e.status !== "canceled").length || 0;
   const pendingOrders = orders?.filter(o => o.status === "pending" || o.status === "ready").length || 0;
   const unclaimedBonuses = bonuses?.filter(b => b.is_available && !b.isClaimed).length || 0;
 
@@ -219,32 +227,38 @@ const Index = () => {
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <Link to="/events" className="block">
-            <div className="glass-card rounded-2xl overflow-hidden">
-              <div className="h-32 bg-gradient-to-br from-wine to-wine-deep relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Wine className="w-16 h-16 text-primary-foreground/20" />
+          {nextLiveEvent ? (
+            <Link to="/events" className="block">
+              <div className="glass-card rounded-2xl overflow-hidden">
+                <div className="h-32 bg-gradient-to-br from-wine to-wine-deep relative">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Wine className="w-16 h-16 text-primary-foreground/20" />
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background to-transparent h-16" />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background to-transparent h-16" />
-              </div>
-              <div className="p-4">
-                <h3 className="font-serif text-lg font-semibold text-foreground">
-                  Holiday Wine Tasting Gala
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  December 28, 2025 • 6:00 PM
-                </p>
-                <div className="flex items-center justify-between mt-3">
-                  <span className="text-xs text-wine-light font-medium">
-                    12 spots left
-                  </span>
-                  <Button variant="gold" size="sm">
-                    Register Now
-                  </Button>
+                <div className="p-4">
+                  <h3 className="font-serif text-lg font-semibold text-foreground line-clamp-2">
+                    {nextLiveEvent.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {nextLiveEvent.date} • {nextLiveEvent.time}
+                  </p>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-xs text-wine-light font-medium">
+                      {nextLiveEvent.hasAvailableTickets ? "Spots available" : "Sold out"}
+                    </span>
+                    <Button variant="gold" size="sm">
+                      Register Now
+                    </Button>
+                  </div>
                 </div>
               </div>
+            </Link>
+          ) : (
+            <div className="glass-card rounded-2xl p-6 text-center text-muted-foreground">
+              No upcoming live events. Check back soon!
             </div>
-          </Link>
+          )}
         </motion.div>
       </div>
     </AppLayout>
