@@ -19,10 +19,13 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
       <main className="pb-28 pt-2">{children}</main>
 
-      {/* Footer logo above bottom nav */}
+      {/* Footer logo and copyright above bottom nav */}
       <footer className="border-t border-border/40">
-        <div className="max-w-5xl mx-auto px-5 py-6 flex items-center justify-center">
+        <div className="max-w-5xl mx-auto px-5 py-6 flex flex-col items-center justify-center gap-3 text-center">
           <img src="/logo.png" alt="Cabernet Wine Club" className="h-14 sm:h-[4.5rem] md:h-[5.5rem] lg:h-[6.5rem] w-auto opacity-90 object-contain" />
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            © 2026 Cabernet Steakhouse. All Rights Reserved. Developed by The Graphix Guru LLC.
+          </p>
         </div>
       </footer>
 

@@ -321,6 +321,14 @@ const Auth = () => {
           </div>
         </motion.div>
       </div>
+      {/* Footer */}
+      <footer className="border-t border-border/40 mt-8">
+        <div className="max-w-5xl mx-auto px-5 py-6 text-center">
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            © 2026 Cabernet Steakhouse. All Rights Reserved. Developed by The Graphix Guru LLC.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
