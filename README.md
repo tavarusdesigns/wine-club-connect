@@ -60,14 +60,33 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Deployment and configuration
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+This project expects these environment vars at build runtime:
 
-## Can I connect a custom domain to my Lovable project?
+- VITE_SUPABASE_URL = https://owzcuyefzddkmcrpzjlk.supabase.co
+- VITE_SUPABASE_PUBLISHABLE_KEY = your Supabase anon key
+- VITE_EVENTBRITE_ORG_ID = 141817181534
 
-Yes, you can!
+Hosting options (Vercel/Netlify/Cloudflare Pages):
+- Framework preset: Vite
+- Build: npm run build
+- Output directory: dist
+- Add the env vars above in your host’s project settings and redeploy
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Supabase requirements:
+- Edge Functions: eventbrite (already deployed) and normalize_phone (optional)
+- Secrets: EVENTBRITE_API_KEY must be set so the eventbrite function can call Eventbrite
+- Database migration: run supabase/migrations/20260105_add_referred_by_to_profiles.sql
+ - CLI: supabase link --project-ref owzcuyefzddkmcrpzjlk && supabase db push
+ - Or paste the SQL into the Dashboard SQL editor and run it
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Events page behavior:
+- By default fetches events for VITE_EVENTBRITE_ORG_ID
+- Shows upcoming events by default; toggle to show past
+
+Member sign-up fields:
+- Required: First Name, Last Name, Email, Password, Mobile Phone #
+- Optional: Referred By
+- Phone input is pretty-formatted and normalized to +E.164 on submit
+- Data flows into Supabase auth user_metadata and syncs to public.profiles (phone, referred_by)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { UserCircle, Shield, Crown } from "lucide-react";
+import { UserCircle, Shield, Crown, Edit3, Save } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { toast } from "sonner";
 
 const UserRolesTab = () => {
-  const { allUsers, userRoles, fetchAllUsers, fetchUserRoles, assignRole, removeRole } = useAdmin();
+  const { allUsers, userRoles, fetchAllUsers, fetchUserRoles, assignRole, removeRole, updateUserContact } = useAdmin();
   const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -88,12 +88,16 @@ const UserRolesTab = () => {
                     <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
                       {getRoleIcon(currentRole) || <UserCircle className="w-6 h-6 text-muted-foreground" />}
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-foreground truncate">{fullName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {user.is_approved ? "Approved" : "Pending approval"}
-                      </p>
-                    </div>
+                   <div className="min-w-0">
+                     <p className="font-medium text-foreground truncate">{fullName}</p>
+                     <p className="text-xs text-muted-foreground">
+                       {user.is_approved ? "Approved" : "Pending approval"}
+                     </p>
+                     <div className="text-xs text-muted-foreground mt-1 truncate">Phone: {user.phone || "—"}</div>
+                     {user.referred_by ? (
+                       <div className="text-xs text-muted-foreground truncate">Referred By: {user.referred_by}</div>
+                     ) : null}
+                   </div>
                   </div>
                   <Select
                     value={currentRole}

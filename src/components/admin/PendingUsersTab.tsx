@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Check, X, UserCircle, Clock } from "lucide-react";
+import { Check, X, UserCircle, Clock, Edit3, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 const PendingUsersTab = () => {
-  const { pendingUsers, fetchPendingUsers, approveUser, rejectUser } = useAdmin();
+  const { pendingUsers, fetchPendingUsers, approveUser, rejectUser, updateUserContact } = useAdmin();
 
   useEffect(() => {
     fetchPendingUsers();
@@ -62,13 +62,17 @@ const PendingUsersTab = () => {
                     <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
                       <UserCircle className="w-6 h-6 text-muted-foreground" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-foreground truncate">{fullName}</p>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        <span>{format(new Date(user.created_at), "MMM d, yyyy")}</span>
-                      </div>
-                    </div>
+                   <div className="min-w-0">
+                     <p className="font-medium text-foreground truncate">{fullName}</p>
+                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                       <Clock className="w-3 h-3" />
+                       <span>{format(new Date(user.created_at), "MMM d, yyyy")}</span>
+                     </div>
+                     <div className="text-xs text-muted-foreground mt-1 truncate">Phone: {user.phone || "—"}</div>
+                     {user.referred_by ? (
+                       <div className="text-xs text-muted-foreground truncate">Referred By: {user.referred_by}</div>
+                     ) : null}
+                   </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Button

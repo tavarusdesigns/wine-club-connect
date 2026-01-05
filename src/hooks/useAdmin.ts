@@ -262,6 +262,18 @@ export function useAdmin() {
     return { error };
   }
 
+  async function updateUserContact(userId: string, updates: { phone?: string | null; referred_by?: string | null }) {
+    const { error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("user_id", userId);
+    if (!error) {
+      await fetchPendingUsers();
+      await fetchAllUsers();
+    }
+    return { error };
+  }
+
   return {
     isAdmin,
     loading,
@@ -282,5 +294,6 @@ export function useAdmin() {
     deleteBonus,
     addWineToBonus,
     removeWineFromBonus,
+    updateUserContact,
   };
 }
