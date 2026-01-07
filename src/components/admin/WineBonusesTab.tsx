@@ -45,7 +45,7 @@ const WineBonusesTab = () => {
   const [newBonusMonth, setNewBonusMonth] = useState<string>("");
   const [newBonusYear, setNewBonusYear] = useState<string>(new Date().getFullYear().toString());
   const [pickupDialogOpen, setPickupDialogOpen] = useState<string | null>(null);
-  const [pickups, setPickups] = useState<Array<{ user_id: string; first_name: string | null; last_name: string | null; phone: string | null; referred_by?: string | null; received_at: string | null }>>([]);
+  const [pickups, setPickups] = useState<Array<{ user_id: string; first_name: string | null; last_name: string | null; phone: string | null; referred_by?: string | null; claimed_at: string | null }>>([]);
   const [pickupsLoading, setPickupsLoading] = useState(false);
   const [pickupSearch, setPickupSearch] = useState("");
   const [onlyNotPicked, setOnlyNotPicked] = useState(false);
@@ -64,7 +64,7 @@ const WineBonusesTab = () => {
       const matchesText = !term || name.includes(term) || phone.includes(term) || ref.includes(term) || uid.includes(term);
       const matchesDigits = !termDigits || phoneDigits.includes(termDigits);
       const matchesTerm = matchesText || matchesDigits;
-      const matchesPicked = !onlyNotPicked || !m.received_at;
+      const matchesPicked = !onlyNotPicked || !m.claimed_at;
       return matchesTerm && matchesPicked;
     });
   }, [pickups, pickupSearch, onlyNotPicked]);
@@ -252,7 +252,7 @@ const WineBonusesTab = () => {
                           const list = await getBonusPickups(bonus.id);
                           setPickups(list);
                           setPickupsLoading(false);
-                          const picked = list.filter((m) => !!m.received_at).length;
+                          const picked = list.filter((m) => !!m.claimed_at).length;
                           setPickupCounts((prev) => ({ ...prev, [bonus.id]: { picked, total: list.length } }));
                         }}
                       >
@@ -426,17 +426,17 @@ const WineBonusesTab = () => {
                             size="sm"
                             onClick={() => {
                               // Export current view as CSV
-                              const header = ["User ID","First Name","Last Name","Phone","Referred By","Picked Up","Received At"]; 
+                              const header = ["User ID","First Name","Last Name","Phone","Referred By","Picked Up","Claimed At"]; 
                               const rows = filteredPickups.map(m => [
                                 m.user_id,
                                 m.first_name || "",
                                 m.last_name || "",
                                 m.phone || "",
                                 m.referred_by || "",
-                                m.received_at ? "Yes" : "No",
-                                m.received_at || ""
+                                m.claimed_at ? "Yes" : "No",
+                                m.claimed_at || ""
                               ]);
-                              const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
+                              const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
                               const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
                               const url = URL.createObjectURL(blob);
                               const a = document.createElement("a");
@@ -458,7 +458,7 @@ const WineBonusesTab = () => {
                       ) : (
                         filteredPickups.map((m) => {
                         const name = [m.first_name, m.last_name].filter(Boolean).join(" ") || m.user_id.slice(0, 8);
-                        const picked = !!m.received_at;
+                        const picked = !!m.claimed_at;
                         return (
                           <div key={m.user_id} className="flex items-center justify-between gap-3 rounded-md border border-border bg-secondary p-3">
                             <div className="min-w-0">
@@ -471,7 +471,7 @@ const WineBonusesTab = () => {
                                 checked={picked}
                                 onCheckedChange={async (val) => {
                                   await setBonusPickup(bonus.id, m.user_id, val);
-                                  setPickups((prev) => prev.map((p) => p.user_id === m.user_id ? { ...p, received_at: val ? new Date().toISOString() : null } : p));
+                                  setPickups((prev) => prev.map((p) => p.user_id === m.user_id ? { ...p, claimed_at: val ? new Date().toISOString() : null } : p));
                                 }}
                               />
                             </div>
