@@ -19,6 +19,8 @@ interface MonthlyBonus {
   is_available: boolean;
   wines: BonusWine[];
   isClaimed: boolean;
+  isPickedUp?: boolean;
+  received_at?: string | null;
 }
 
 const monthNames = [

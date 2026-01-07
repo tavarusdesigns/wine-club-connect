@@ -8,7 +8,7 @@ interface MemberPickup {
   last_name: string | null;
   phone: string | null;
   referred_by?: string | null;
-  received_at: string | null;
+  claimed_at: string | null;
 }
 
 interface PendingUser {
@@ -17,6 +17,7 @@ interface PendingUser {
   first_name: string | null;
   last_name: string | null;
   phone: string | null;
+  referred_by?: string | null;
   created_at: string;
   is_approved: boolean;
 }
@@ -289,32 +290,46 @@ export function useAdmin() {
       .select("user_id, first_name, last_name, phone, referred_by");
     const { data: claims } = await supabase
       .from("user_bonus_claims")
-      .select("user_id, received_at")
+      .select("user_id, claimed_at")
       .eq("bonus_id", bonusId);
-    const claimMap = new Map((claims || []).map((c: any) => [c.user_id, c.received_at]));
+    const claimMap = new Map((claims || []).map((c: any) => [c.user_id, c.claimed_at]));
     return (profiles || []).map((p: any) => ({
       user_id: p.user_id,
       first_name: p.first_name,
       last_name: p.last_name,
       phone: p.phone,
       referred_by: p.referred_by,
-      received_at: claimMap.get(p.user_id) || null,
+      claimed_at: claimMap.get(p.user_id) || null,
     }));
   }
 
   async function setBonusPickup(bonusId: string, userId: string, pickedUp: boolean) {
     if (pickedUp) {
-      // Upsert claim and set received_at to now
-      const { error } = await supabase.from("user_bonus_claims").upsert(
-        { bonus_id: bonusId, user_id: userId, received_at: new Date().toISOString() },
-        { onConflict: "user_id,bonus_id" }
-      );
-      return { error };
+      // Check if claim exists
+      const { data: existing } = await supabase
+        .from("user_bonus_claims")
+        .select("id")
+        .eq("bonus_id", bonusId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      
+      if (existing) {
+        // Update existing claim - note: received_at is not in the schema, 
+        // so we just ensure the claim exists (claimed_at is already set)
+        return { error: null };
+      } else {
+        // Insert new claim
+        const { error } = await supabase.from("user_bonus_claims").insert({
+          bonus_id: bonusId,
+          user_id: userId,
+        });
+        return { error };
+      }
     } else {
-      // Clear received_at
+      // Delete the claim entirely
       const { error } = await supabase
         .from("user_bonus_claims")
-        .update({ received_at: null })
+        .delete()
         .eq("bonus_id", bonusId)
         .eq("user_id", userId);
       return { error };

@@ -181,7 +181,7 @@ const WineOrdersTab = () => {
     mutationFn: async () => {
       const validItems = lineItems
         .map((item, index) => ({ ...item, line_number: index + 1 }))
-        .filter((item) => item.wine_name.trim() !== "" && item.quantity > 0);
+        .filter((item) => item.wine_name.trim() !== "" && parseInt(item.quantity || "0", 10) > 0);
 
       if (validItems.length === 0) {
         throw new Error("Please add at least one wine to the order");
@@ -225,7 +225,6 @@ const WineOrdersTab = () => {
     onSuccess: () => {
       toast.success("Wine order created successfully!");
       resetForm();
-      setIsCreateOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin-wine-orders"] });
     },
     onError: (error: Error) => {
@@ -240,7 +239,7 @@ const WineOrdersTab = () => {
 
       const validItems = lineItems
         .map((item, index) => ({ ...item, line_number: index + 1 }))
-        .filter((item) => item.wine_name.trim() !== "" && item.quantity > 0);
+        .filter((item) => item.wine_name.trim() !== "" && parseInt(item.quantity || "0", 10) > 0);
 
       if (validItems.length === 0) {
         throw new Error("Please add at least one wine to the order");

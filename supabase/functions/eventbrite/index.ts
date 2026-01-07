@@ -73,9 +73,9 @@ serve(async (req) => {
       }
     }
 
-    const action = url.searchParams.get("action") || bodyParams?.action || "events";
-    const organizationId = url.searchParams.get("organization_id") || bodyParams?.organization_id;
-    const eventId = url.searchParams.get("event_id") || bodyParams?.event_id;
+    const action = (url.searchParams.get("action") || bodyParams?.action || "events") as string;
+    const organizationId = (url.searchParams.get("organization_id") || bodyParams?.organization_id) as string | undefined;
+    const eventId = (url.searchParams.get("event_id") || bodyParams?.event_id) as string | undefined;
 
     console.log(`Eventbrite action: ${action}, organizationId: ${organizationId}, eventId: ${eventId}`);
 

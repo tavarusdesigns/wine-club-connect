@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Wine, Calendar, Package, Gift, ChevronRight, Sparkles, LogOut, Shield } from "lucide-react";
+import { Wine, Calendar, Package, Gift, ChevronRight, Sparkles, LogOut, Shield, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
@@ -90,9 +90,11 @@ const Index = () => {
               transition={{ duration: 0.5 }}
               className="flex items-center gap-4"
             >
-              <div className="w-14 h-14 rounded-full gold-gradient flex items-center justify-center shadow-lg">
-                <Wine className="w-7 h-7 text-accent-foreground" />
-              </div>
+              <Link to="/profile">
+                <div className="w-14 h-14 rounded-full gold-gradient flex items-center justify-center shadow-lg hover:scale-105 transition-transform cursor-pointer">
+                  <Wine className="w-7 h-7 text-accent-foreground" />
+                </div>
+              </Link>
               <div>
                 <p className="text-primary-foreground/70 text-sm">Welcome back,</p>
                 <h1 className="text-2xl font-serif font-bold text-primary-foreground">
@@ -104,6 +106,11 @@ const Index = () => {
               </div>
             </motion.div>
             <div className="flex items-center gap-2 mt-2">
+              <Link to="/profile">
+                <button className="p-2 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors">
+                  <User className="w-5 h-5 text-primary-foreground/70" />
+                </button>
+              </Link>
               <NotificationBell />
               <button
                 onClick={handleLogout}
