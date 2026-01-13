@@ -284,6 +284,28 @@ export function useAdmin() {
     return { error };
   }
 
+  // Update full profile (for admin editing)
+  async function updateProfile(
+    userId: string,
+    updates: {
+      first_name?: string | null;
+      last_name?: string | null;
+      phone?: string | null;
+      membership_tier?: string | null;
+      is_approved?: boolean;
+    }
+  ) {
+    const { error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("user_id", userId);
+    if (!error) {
+      await fetchPendingUsers();
+      await fetchAllUsers();
+    }
+    return { error };
+  }
+
   async function getBonusPickups(bonusId: string): Promise<MemberPickup[]> {
     const { data: profiles } = await supabase
       .from("profiles")
@@ -370,6 +392,7 @@ export function useAdmin() {
     addWineToBonus,
     removeWineFromBonus,
     updateUserContact,
+    updateProfile,
     getBonusPickups,
     setBonusPickup,
     getBonusPickupCount,
