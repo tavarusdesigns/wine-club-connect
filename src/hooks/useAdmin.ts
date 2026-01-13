@@ -293,6 +293,11 @@ export function useAdmin() {
       phone?: string | null;
       membership_tier?: string | null;
       is_approved?: boolean;
+      billing_address_line1?: string | null;
+      billing_address_line2?: string | null;
+      billing_city?: string | null;
+      billing_state?: string | null;
+      billing_zip?: string | null;
     }
   ) {
     const { error } = await supabase
@@ -304,6 +309,27 @@ export function useAdmin() {
       await fetchAllUsers();
     }
     return { error };
+  }
+
+  // Update user email (requires edge function with service role)
+  async function updateUserEmail(userId: string, email: string) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-user-email`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+        body: JSON.stringify({ user_id: userId, email }),
+      }
+    );
+    const result = await response.json();
+    if (!response.ok) {
+      return { error: { message: result.error } };
+    }
+    return { error: null };
   }
 
   async function getBonusPickups(bonusId: string): Promise<MemberPickup[]> {
@@ -393,6 +419,7 @@ export function useAdmin() {
     removeWineFromBonus,
     updateUserContact,
     updateProfile,
+    updateUserEmail,
     getBonusPickups,
     setBonusPickup,
     getBonusPickupCount,
