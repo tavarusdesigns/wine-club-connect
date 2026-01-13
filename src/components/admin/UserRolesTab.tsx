@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdmin } from "@/hooks/useAdmin";
 import { toast } from "sonner";
 
@@ -25,22 +26,35 @@ interface EditFormData {
   first_name: string;
   last_name: string;
   phone: string;
+  email: string;
   membership_tier: string;
   is_approved: boolean;
+  billing_address_line1: string;
+  billing_address_line2: string;
+  billing_city: string;
+  billing_state: string;
+  billing_zip: string;
 }
 
 const UserRolesTab = () => {
-  const { allUsers, userRoles, fetchAllUsers, fetchUserRoles, assignRole, removeRole, updateProfile } = useAdmin();
+  const { allUsers, userRoles, fetchAllUsers, fetchUserRoles, assignRole, removeRole, updateProfile, updateUserEmail } = useAdmin();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditFormData>({
     first_name: "",
     last_name: "",
     phone: "",
-    membership_tier: "standard",
+    email: "",
+    membership_tier: "reserva",
     is_approved: false,
+    billing_address_line1: "",
+    billing_address_line2: "",
+    billing_city: "",
+    billing_state: "",
+    billing_zip: "",
   });
   const [saving, setSaving] = useState(false);
+  const [userEmails, setUserEmails] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchAllUsers();
@@ -59,7 +73,8 @@ const UserRolesTab = () => {
     const query = searchQuery.toLowerCase();
     const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ").toLowerCase();
     const phone = user.phone?.toLowerCase() || "";
-    return fullName.includes(query) || phone.includes(query);
+    const email = userEmails[user.user_id]?.toLowerCase() || "";
+    return fullName.includes(query) || phone.includes(query) || email.includes(query);
   });
 
   const handleRoleChange = async (userId: string, role: string) => {
@@ -80,13 +95,25 @@ const UserRolesTab = () => {
     }
   };
 
-  const handleEditClick = (user: typeof allUsers[0]) => {
+  const handleEditClick = (user: typeof allUsers[0] & { 
+    billing_address_line1?: string | null;
+    billing_address_line2?: string | null;
+    billing_city?: string | null;
+    billing_state?: string | null;
+    billing_zip?: string | null;
+  }) => {
     setEditForm({
       first_name: user.first_name || "",
       last_name: user.last_name || "",
       phone: user.phone || "",
-      membership_tier: "standard",
+      email: userEmails[user.user_id] || "",
+      membership_tier: (user as any).membership_tier || "reserva",
       is_approved: user.is_approved,
+      billing_address_line1: (user as any).billing_address_line1 || "",
+      billing_address_line2: (user as any).billing_address_line2 || "",
+      billing_city: (user as any).billing_city || "",
+      billing_state: (user as any).billing_state || "",
+      billing_zip: (user as any).billing_zip || "",
     });
     setEditingUser(user.user_id);
   };
@@ -94,20 +121,42 @@ const UserRolesTab = () => {
   const handleSaveEdit = async () => {
     if (!editingUser) return;
     setSaving(true);
-    const { error } = await updateProfile(editingUser, {
+
+    // Update profile fields
+    const { error: profileError } = await updateProfile(editingUser, {
       first_name: editForm.first_name || null,
       last_name: editForm.last_name || null,
       phone: editForm.phone || null,
       membership_tier: editForm.membership_tier || null,
       is_approved: editForm.is_approved,
+      billing_address_line1: editForm.billing_address_line1 || null,
+      billing_address_line2: editForm.billing_address_line2 || null,
+      billing_city: editForm.billing_city || null,
+      billing_state: editForm.billing_state || null,
+      billing_zip: editForm.billing_zip || null,
     });
-    setSaving(false);
-    if (error) {
-      toast.error("Failed to update member");
-    } else {
-      toast.success("Member updated successfully");
-      setEditingUser(null);
+
+    if (profileError) {
+      setSaving(false);
+      toast.error("Failed to update member profile");
+      return;
     }
+
+    // Update email if changed
+    const currentEmail = userEmails[editingUser] || "";
+    if (editForm.email && editForm.email !== currentEmail) {
+      const { error: emailError } = await updateUserEmail(editingUser, editForm.email);
+      if (emailError) {
+        setSaving(false);
+        toast.error(`Failed to update email: ${emailError.message}`);
+        return;
+      }
+      setUserEmails((prev) => ({ ...prev, [editingUser]: editForm.email }));
+    }
+
+    setSaving(false);
+    toast.success("Member updated successfully");
+    setEditingUser(null);
   };
 
   const getRoleIcon = (role: string) => {
@@ -138,7 +187,7 @@ const UserRolesTab = () => {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search members by name or phone..."
+          placeholder="Search members by name, phone, or email..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 bg-secondary border-border"
@@ -174,6 +223,7 @@ const UserRolesTab = () => {
                         <p className="font-medium text-foreground truncate">{fullName}</p>
                         <p className="text-xs text-muted-foreground">
                           {user.is_approved ? "Approved" : "Pending approval"}
+                          {(user as any).membership_tier && ` • ${(user as any).membership_tier}`}
                         </p>
                         <div className="text-xs text-muted-foreground mt-1 truncate">
                           Phone: {user.phone || "—"}
@@ -227,68 +277,142 @@ const UserRolesTab = () => {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Member</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="contact">Contact</TabsTrigger>
+              <TabsTrigger value="billing">Billing</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="basic" className="space-y-4 pt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="first_name">First Name</Label>
+                  <Input
+                    id="first_name"
+                    value={editForm.first_name}
+                    onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
+                    className="bg-secondary border-border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last_name">Last Name</Label>
+                  <Input
+                    id="last_name"
+                    value={editForm.last_name}
+                    onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
+                    className="bg-secondary border-border"
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="first_name">First Name</Label>
+                <Label htmlFor="membership_tier">Membership Tier</Label>
+                <Select
+                  value={editForm.membership_tier}
+                  onValueChange={(value) => setEditForm({ ...editForm, membership_tier: value })}
+                >
+                  <SelectTrigger className="bg-secondary border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="reserva">Reserva</SelectItem>
+                    <SelectItem value="sommelier">Sommelier</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="is_approved"
+                  checked={editForm.is_approved}
+                  onChange={(e) => setEditForm({ ...editForm, is_approved: e.target.checked })}
+                  className="rounded border-border"
+                />
+                <Label htmlFor="is_approved">Approved Member</Label>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="contact" className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
                 <Input
-                  id="first_name"
-                  value={editForm.first_name}
-                  onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
+                  id="email"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                   className="bg-secondary border-border"
+                  placeholder="member@example.com"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="last_name">Last Name</Label>
+                <Label htmlFor="phone">Phone Number</Label>
                 <Input
-                  id="last_name"
-                  value={editForm.last_name}
-                  onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
+                  id="phone"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                   className="bg-secondary border-border"
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                value={editForm.phone}
-                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                className="bg-secondary border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="membership_tier">Membership Tier</Label>
-              <Select
-                value={editForm.membership_tier}
-                onValueChange={(value) => setEditForm({ ...editForm, membership_tier: value })}
-              >
-                <SelectTrigger className="bg-secondary border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="vip">VIP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="is_approved"
-                checked={editForm.is_approved}
-                onChange={(e) => setEditForm({ ...editForm, is_approved: e.target.checked })}
-                className="rounded border-border"
-              />
-              <Label htmlFor="is_approved">Approved Member</Label>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
+            </TabsContent>
+
+            <TabsContent value="billing" className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="billing_address_line1">Address Line 1</Label>
+                <Input
+                  id="billing_address_line1"
+                  value={editForm.billing_address_line1}
+                  onChange={(e) => setEditForm({ ...editForm, billing_address_line1: e.target.value })}
+                  className="bg-secondary border-border"
+                  placeholder="123 Main St"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing_address_line2">Address Line 2</Label>
+                <Input
+                  id="billing_address_line2"
+                  value={editForm.billing_address_line2}
+                  onChange={(e) => setEditForm({ ...editForm, billing_address_line2: e.target.value })}
+                  className="bg-secondary border-border"
+                  placeholder="Apt, Suite, Unit, etc."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="billing_city">City</Label>
+                  <Input
+                    id="billing_city"
+                    value={editForm.billing_city}
+                    onChange={(e) => setEditForm({ ...editForm, billing_city: e.target.value })}
+                    className="bg-secondary border-border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="billing_state">State</Label>
+                  <Input
+                    id="billing_state"
+                    value={editForm.billing_state}
+                    onChange={(e) => setEditForm({ ...editForm, billing_state: e.target.value })}
+                    className="bg-secondary border-border"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing_zip">ZIP Code</Label>
+                <Input
+                  id="billing_zip"
+                  value={editForm.billing_zip}
+                  onChange={(e) => setEditForm({ ...editForm, billing_zip: e.target.value })}
+                  className="bg-secondary border-border"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <div className="flex justify-end gap-2 pt-4">
             <Button
               variant="outline"
               onClick={() => setEditingUser(null)}
